@@ -1,0 +1,13 @@
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const app = express();
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173", credentials: true }));
+app.use(express.json());
+app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/dataset", require("./routes/dataset.routes"));
+app.use("/api/analyze", require("./routes/analyze.routes"));
+app.use("/api/ai", require("./routes/ai.routes"));
+app.use("/api/subscription", require("./routes/subscription.routes"));
+app.use(require("./middleware/error.middleware"));
+module.exports = app;

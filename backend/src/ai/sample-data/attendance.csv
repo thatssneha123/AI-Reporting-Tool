@@ -1,0 +1,7 @@
+date,employee,department,attendance
+2023-01-01,Rahul,IT,1
+2023-01-01,Priya,HR,1
+2023-01-01,Amit,Sales,0
+2023-01-02,Rahul,IT,1
+2023-01-02,Priya,HR,1
+2023-01-02,Amit,Sales,1

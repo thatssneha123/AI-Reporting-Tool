@@ -1,0 +1,42 @@
+
+> frontend@0.0.1 dev
+> vite --host 127.0.0.1 --port 5174
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m863[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5174[22m/[39m
+[2m5:15:40 pm[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mtailwind.config.js[22m
+[2m5:16:04 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m5:16:14 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/shared/Navbar.jsx, /src/index.css[22m
+[2m5:17:02 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/shared/Navbar.jsx, /src/index.css[22m
+[2m5:17:14 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m5:17:29 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/DataTable.jsx, /src/index.css[22m
+[2m5:18:15 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/DataTable.jsx, /src/index.css[22m
+[2m5:18:28 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/ChartRenderer.jsx, /src/index.css[22m
+[2m5:19:15 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/ChartRenderer.jsx, /src/index.css[22m
+[2m5:19:26 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/InsightPanel.jsx, /src/index.css[22m
+[2m5:19:46 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/InsightPanel.jsx, /src/index.css[22m
+[2m5:19:58 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/upload/DropZone.jsx, /src/index.css[22m
+[2m5:20:19 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/upload/DropZone.jsx, /src/index.css[22m
+[2m5:20:30 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/upload/FileValidator.jsx, /src/index.css[22m
+[2m5:20:53 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/upload/FileValidator.jsx, /src/index.css[22m
+[2m5:21:06 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Dashboard.jsx, /src/index.css[22m
+[2m5:22:03 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Dashboard.jsx, /src/index.css[22m
+[2m5:22:16 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Upload.jsx, /src/index.css[22m
+[2m5:22:48 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Upload.jsx, /src/index.css[22m
+[2m5:22:58 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Results.jsx, /src/index.css[22m
+[2m5:23:30 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Results.jsx, /src/index.css[22m
+[2m5:23:41 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Query.jsx, /src/index.css[22m
+[2m5:24:11 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Query.jsx, /src/index.css[22m
+[2m5:24:52 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m5:25:12 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/results/DataTable.jsx, /src/index.css[22m
+[2m5:25:26 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/upload/DropZone.jsx, /src/index.css[22m
+[2m5:25:46 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Dashboard.jsx, /src/index.css[22m
+[2m5:26:09 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/shared/Navbar.jsx, /src/index.css[22m
+[2m5:26:22 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Query.jsx, /src/index.css[22m
+[2m5:26:35 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Results.jsx, /src/index.css[22m
+[2m5:27:16 pm[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mxlsx[32m[39m
+[2m5:27:16 pm[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m5:27:36 pm[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m5:29:34 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css[22m
