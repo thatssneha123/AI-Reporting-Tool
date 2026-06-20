@@ -33,19 +33,38 @@ const normalizeAiResult = (result) => {
 };
 
 const analyzeFileWithAi = async ({ filePath, query }) => {
+  console.log("analyzeFileWithAi called");
   const absolutePath = toAbsolutePath(filePath);
   const dataset = await loadDataset(absolutePath);
   const normalizedQuery = normalizeQuery(query || "Summarize this dataset");
   const result = await runAgent(normalizedQuery, dataset);
 
-  if (result.error) {
-    throw new Error(result.error);
-  }
+if (result.error) {
+  throw new Error(result.error);
+}
 
-  return normalizeAiResult(result);
+const aiResult = normalizeAiResult(result);
+
+const lowerQuery = normalizedQuery.toLowerCase();
+
+if (
+  lowerQuery.includes("grocery") ||
+  lowerQuery.includes("bill") ||
+  lowerQuery.includes("consumption") ||
+  lowerQuery.includes("recommendation")
+) {
+  return {
+    ...aiResult,
+    consumptionReport: analyzeConsumption(dataset),
+    recommendationReport: generateRecommendations(dataset),
+  };
+}
+
+return aiResult;
 };
 
 const summarizeFileWithAi = async (filePath) => {
+  console.log("summarizeFileWithAi called");
   const dataset = await loadDataset(toAbsolutePath(filePath));
   const analysis = analyzeDataset(dataset);
 
@@ -53,11 +72,17 @@ const summarizeFileWithAi = async (filePath) => {
     throw new Error(analysis.error);
   }
 
-  return {
-    datasetSummary: summarizeAnalysis(analysis),
-    consumptionReport: analyzeConsumption(dataset),
-    recommendationReport: generateRecommendations(dataset),
-  };
+  const consumptionReport = analyzeConsumption(dataset);
+const recommendationReport = generateRecommendations(dataset);
+
+console.log("Consumption:", consumptionReport);
+console.log("Recommendation:", recommendationReport);
+
+return {
+  datasetSummary: summarizeAnalysis(analysis),
+  consumptionReport,
+  recommendationReport,
+};
 };
 
 module.exports = {

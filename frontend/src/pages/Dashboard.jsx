@@ -92,6 +92,9 @@ export default function Dashboard() {
     setError("");
     try {
       const response = await queryService.analyze({ datasetId: selectedDatasetId, query: prompt });
+
+      console.log("API Response:", response);
+
       setQuery(prompt);
       setResult(response);
       setManualChartType(response.chartType || "bar");
@@ -172,8 +175,125 @@ export default function Dashboard() {
             locale={numberLocale}
           />
 
-          {result && <SummaryCards insights={result.insightBullets || result.insights} />}
-          <DataTable data={chartRows} title="Chart Data" locale={numberLocale} />
+          {result && (
+  <>
+    <SummaryCards
+      insights={
+        result.insightBullets ||
+        result.insights ||
+        result.datasetSummary
+      }
+    />
+
+    {result.consumptionReport && (
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+        <h2 className="mb-4 text-lg font-semibold">
+          Grocery Consumption Report
+        </h2>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <div>
+            <strong>Total Spend:</strong> ₹
+            {result.consumptionReport.totalSpend}
+          </div>
+
+          <div>
+            <strong>Healthy Spend:</strong> ₹
+            {result.consumptionReport.healthySpend}
+          </div>
+
+          <div>
+            <strong>Unhealthy Spend:</strong> ₹
+            {result.consumptionReport.unhealthySpend}
+          </div>
+
+          <div>
+            <strong>Health Score:</strong>{" "}
+            {result.consumptionReport.healthScore}
+          </div>
+
+          <div>
+            <strong>Estimated Savings:</strong> ₹
+            {result.consumptionReport.estimatedSavings}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {result.recommendationReport && (
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+        <h2 className="mb-4 text-lg font-semibold">
+          Recommendation Report
+        </h2>
+
+        <div className="mb-4">
+          <h3 className="font-medium">Recommendations</h3>
+
+          <ul className="list-disc pl-5">
+            {result.recommendationReport.recommendations?.map(
+              (item, index) => (
+                <li key={index}>{item}</li>
+              )
+            )}
+          </ul>
+        </div>
+        {result.recommendationReport?.unhealthyItems?.length > 0 && (
+  <div className="mt-4">
+    <h3 className="font-medium">Unhealthy Items</h3>
+
+    <ul className="list-disc pl-5">
+      {result.recommendationReport.unhealthyItems.map(
+        (item, index) => (
+          <li key={index}>
+            {item.item} ({item.category})
+          </li>
+        )
+      )}
+    </ul>
+  </div>
+)}
+
+{result.recommendationReport?.healthyItems?.length > 0 && (
+  <div className="mt-4">
+    <h3 className="font-medium">Healthy Items</h3>
+
+    <ul className="list-disc pl-5">
+      {result.recommendationReport.healthyItems.map(
+        (item, index) => (
+          <li key={index}>
+            {item.item} ({item.category})
+          </li>
+        )
+      )}
+    </ul>
+  </div>
+)}
+
+        <div>
+          <h3 className="font-medium">
+            Swadeshi Alternatives
+          </h3>
+
+          <ul className="list-disc pl-5">
+            {result.recommendationReport.swadeshiAlternatives?.map(
+              (item, index) => (
+                <li key={index}>{item}</li>
+              )
+            )}
+          </ul>
+        </div>
+      </div>
+    )}
+
+    {chartRows.length > 0 && (
+      <DataTable
+        data={chartRows}
+        title="Chart Data"
+        locale={numberLocale}
+      />
+    )}
+  </>
+)}
         </div>
       </main>
     </div>

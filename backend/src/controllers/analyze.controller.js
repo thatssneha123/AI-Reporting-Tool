@@ -10,7 +10,23 @@ exports.analyze = async (req, res, next) => {
     const dataset = await Dataset.findOne({ _id: datasetId, userId: req.user._id });
     if (!dataset) return res.status(404).json({ message: "Dataset not found" });
 
-    const result = await analyzeFileWithAi({ filePath: dataset.path, query });
+    let result;
+
+const lowerQuery = query.toLowerCase();
+
+const chartResult = await analyzeFileWithAi({
+  filePath: dataset.path,
+  query,
+});
+
+const groceryResult = await summarizeFileWithAi(
+  dataset.path
+);
+
+result = {
+  ...chartResult,
+  ...groceryResult,
+};
     const analysis = await Analysis.create({ userId: req.user._id, datasetId, query, result });
     res.json({ ...result, analysisId: analysis._id });
   } catch (err) { next(err); }
