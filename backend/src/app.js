@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL || "https://ai-reporting-tool.vercel.app", credentials: true }));
 app.use(express.json());
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/dataset", require("./routes/dataset.routes"));
