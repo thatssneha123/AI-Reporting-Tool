@@ -16,7 +16,9 @@ async function loadCSV(filePath) {
     const rows = [];
 
     fs.createReadStream(filePath)
-      .pipe(csv())
+      .pipe(csv({
+        mapHeaders: ({ header }) => String(header || "").replace(/^\uFEFF/, "").trim(),
+      }))
       .on("data", row => rows.push(row))
       .on("end", () => resolve(rows))
       .on("error", reject);
@@ -32,7 +34,7 @@ function loadExcel(filePath) {
 
   return XLSX.utils.sheet_to_json(
     workbook.Sheets[sheetName]
-  );
+  ).map(normalizeRowKeys);
 }
 
 async function loadPDF(filePath) {
@@ -70,3 +72,12 @@ async function loadDataset(filePath) {
 module.exports = {
   loadDataset
 };
+
+function normalizeRowKeys(row) {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      String(key || "").replace(/^\uFEFF/, "").trim(),
+      value,
+    ])
+  );
+}

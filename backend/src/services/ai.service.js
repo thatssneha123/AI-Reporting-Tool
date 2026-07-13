@@ -5,10 +5,14 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 
 const { runAgent } = require("../ai/agents/aiAgent");
 const { loadDataset } = require("../ai/modules/datasetLoader");
+const { analyzeDatasetIntelligence } = require("../ai/modules/datasetIntelligenceAgent");
 const { analyzeDataset, summarizeAnalysis } = require("../ai/modules/datasetAnalyzer");
 const { normalizeQuery } = require("../ai/utils/queryNormalizer");
 const { generateRecommendations } = require("../ai/modules/recommendationEngine");
 const { analyzeConsumption } = require("../ai/modules/consumptionAnalyzer");
+const { classifyQuery, generateDashboardIntents } = require("../ai/modules/queryClassifier");
+const { generateDashboard, shouldTriggerDashboard } = require("../ai/modules/dashboardGenerator");
+const { computeAllChartData } = require("../ai/modules/dashboardDataCompute");
 
 const toAbsolutePath = (filePath) => path.isAbsolute(filePath)
   ? filePath
@@ -29,6 +33,7 @@ const normalizeAiResult = (result) => {
     vizPlan: result.vizPlan,
     computedData: result.computedData,
     processingTimeMs: result.processingTimeMs,
+    datasetIntelligence: result.datasetIntelligence || null,
   };
 };
 
@@ -36,31 +41,71 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
   console.log("analyzeFileWithAi called");
   const absolutePath = toAbsolutePath(filePath);
   const dataset = await loadDataset(absolutePath);
+  const datasetIntelligence = analyzeDatasetIntelligence(dataset, {
+    filename: path.basename(absolutePath),
+    fileType: path.extname(absolutePath).replace(".", ""),
+  });
+
+  // Check if this should be a dashboard (empty or vague query)
+  const isDashboardMode = shouldTriggerDashboard(query);
+
+  if (isDashboardMode) {
+    // WORKFLOW 1: Automatic Dashboard
+    console.log("Generating automatic dashboard");
+    const analysis = analyzeDataset(dataset);
+    
+    const dashboard = generateDashboard(datasetIntelligence, analysis, dataset);
+    
+    // Compute actual chart data for each dashboard chart
+    console.log(`Computing data for ${dashboard.charts?.length || 0} charts`);
+    const chartsWithData = computeAllChartData(dataset, dashboard.charts || [], datasetIntelligence);
+    
+    // Always include grocery analysis for any dataset (in case it's applicable)
+    const consumptionReport = analyzeConsumption(dataset);
+    const recommendationReport = generateRecommendations(dataset);
+
+    return {
+      ...dashboard,
+      charts: chartsWithData,
+      consumptionReport,
+      recommendationReport,
+    };
+  }
+
+  // WORKFLOW 2: Single-Chart Analysis (existing behavior)
+  // Classify query to determine mode (dashboard vs specific)
+  const queryClassification = classifyQuery(query);
+  
   const normalizedQuery = normalizeQuery(query || "Summarize this dataset");
-  const result = await runAgent(normalizedQuery, dataset);
+  
+  // Pass intelligence and classification context to agent
+  const result = await runAgent(normalizedQuery, dataset, {
+    datasetIntelligence,
+    queryClassification,
+  });
 
-if (result.error) {
-  throw new Error(result.error);
-}
+  if (result.error) {
+    throw new Error(result.error);
+  }
 
-const aiResult = normalizeAiResult(result);
+  const aiResult = normalizeAiResult(result);
 
-const lowerQuery = normalizedQuery.toLowerCase();
+  const lowerQuery = normalizedQuery.toLowerCase();
 
-if (
-  lowerQuery.includes("grocery") ||
-  lowerQuery.includes("bill") ||
-  lowerQuery.includes("consumption") ||
-  lowerQuery.includes("recommendation")
-) {
-  return {
-    ...aiResult,
-    consumptionReport: analyzeConsumption(dataset),
-    recommendationReport: generateRecommendations(dataset),
-  };
-}
+  if (
+    lowerQuery.includes("grocery") ||
+    lowerQuery.includes("bill") ||
+    lowerQuery.includes("consumption") ||
+    lowerQuery.includes("recommendation")
+  ) {
+    return {
+      ...aiResult,
+      consumptionReport: analyzeConsumption(dataset),
+      recommendationReport: generateRecommendations(dataset),
+    };
+  }
 
-return aiResult;
+  return aiResult;
 };
 
 const summarizeFileWithAi = async (filePath) => {

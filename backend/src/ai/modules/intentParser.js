@@ -1,14 +1,27 @@
 const fs = require("fs");
 const path = require("path");
 const { callLLMJson } = require("../services/llmService");
+const { classifyQuery } = require("./queryClassifier");
 
 const combinedPrompt = fs.readFileSync(
   path.join(__dirname, "../prompts/combinedPrompt.txt"),
   "utf-8"
 );
 
-async function parseIntent(query, metadata) {
-  const fullPrompt = `
+/**
+ * Parse user query into structured intent
+ * Optionally uses dataset intelligence for context-aware parsing
+ * @param {string} query - User query
+ * @param {Object} metadata - Dataset metadata (columns, types, rowCount)
+ * @param {Object} options - Optional: { intelligence, classificationContext }
+ * @returns {Object} Parsed intent
+ */
+async function parseIntent(query, metadata, options = {}) {
+  const intelligence = options.intelligence || null;
+  const classificationContext = options.classificationContext || classifyQuery(query);
+
+  // Build enhanced prompt with intelligence context
+  let promptContext = `
 ${combinedPrompt}
 
 User Query:
@@ -17,61 +30,112 @@ ${query}
 Dataset Info:
 Columns: ${metadata.columns.join(", ")}
 Types: ${JSON.stringify(metadata.columnTypes)}
-RowCount: ${metadata.rowCount}
-`;
+RowCount: ${metadata.rowCount}`;
+
+  // Add intelligence context if available
+  if (intelligence && intelligence.dataset) {
+    promptContext += `
+
+Dataset Domain: ${intelligence.dataset.domain}
+Dataset Type: ${intelligence.dataset.inferredType}
+Domain Signals: ${(intelligence.dataset.domainSignals || []).join(", ")}`;
+  }
+
+  // Add query classification hint
+  if (classificationContext && classificationContext.category) {
+    promptContext += `
+
+Query Category: ${classificationContext.category}
+Query Type: ${classificationContext.mode}`;
+  }
 
   try {
-    const intent = await callLLMJson(fullPrompt, "");
-    return applyQueryHints(intent, query, metadata);
+    const intent = await callLLMJson(promptContext, "");
+    return applyQueryHints(intent, query, metadata, intelligence);
   } catch (error) {
     if (process.env.AI_DEBUG === "true") {
       console.warn("LLM intent parsing failed, using local fallback:", error.message);
     }
 
-    return applyQueryHints(buildFallbackIntent(query, metadata), query, metadata);
+    return applyQueryHints(
+      buildFallbackIntent(query, metadata, intelligence),
+      query,
+      metadata,
+      intelligence
+    );
   }
 }
 
-function applyQueryHints(intent, query, metadata) {
+function applyQueryHints(intent, query, metadata, intelligence = null) {
   const q = String(query || "").toLowerCase();
   const columns = metadata.columns || [];
   const columnTypes = metadata.columnTypes || {};
   const numericColumns = columns.filter((col) => columnTypes[col] === "numeric" && col.trim() !== "");
+  const categoricalColumns = columns.filter((col) => columnTypes[col] === "categorical");
+  const datetimeColumns = columns.filter((col) => columnTypes[col] === "datetime");
   const findColumn = (patterns, candidates = columns) =>
     candidates.find((col) => patterns.some((pattern) => col.toLowerCase().includes(pattern)));
+  const findMentionedColumn = (candidates = columns) =>
+    candidates.find((col) => {
+      const normalized = normalizeColumnName(col);
+      return normalized && new RegExp(`\\b${escapeRegExp(normalized)}\\b`, "i").test(q);
+    });
 
   const hasTerm = (term) => new RegExp(`\\b${term}\\b`, "i").test(q);
-  const hintedGroup =
-    ((hasTerm("month") || hasTerm("monthly")) && findColumn(["month"])) ||
-    (hasTerm("city") && findColumn(["city"])) ||
-    (hasTerm("company") && findColumn(["company"])) ||
-    null;
+  
+  // Enhanced with intelligence context
+  let hintedGroup = null;
+  if (hasTerm("month") || hasTerm("monthly")) {
+    hintedGroup = findColumn(["month"]);
+  } else if (hasTerm("city")) {
+    hintedGroup = findColumn(["city"]);
+  } else if (hasTerm("company")) {
+    hintedGroup = findColumn(["company"]);
+  } else {
+    hintedGroup = findByPhraseColumn(q, categoricalColumns) ||
+      findMentionedColumn(categoricalColumns) ||
+      findByPhraseColumn(q, datetimeColumns) ||
+      null;
+  }
+
+  // Use intelligence-suggested categorical column as fallback
+  if (!hintedGroup && intelligence?.schema?.categoricalColumns?.[0]) {
+    hintedGroup = intelligence.schema.categoricalColumns[0];
+  }
 
   const hintedValue =
     ((hasTerm("bill") || hasTerm("amount") || hasTerm("cost") || hasTerm("charge")) &&
       findColumn(["bill", "amount", "cost", "charge", "total"], numericColumns)) ||
     ((hasTerm("consumption") || hasTerm("usage") || hasTerm("hour") || hasTerm("unit")) &&
       findColumn(["consumption", "usage", "unit", "hour"], numericColumns)) ||
+    findMentionedColumn(numericColumns) ||
     null;
+
+  // Use intelligence-suggested numeric column as fallback
+  let finalValueColumn = hintedValue;
+  if (!finalValueColumn && intelligence?.schema?.numericalColumns?.[0]) {
+    finalValueColumn = intelligence.schema.numericalColumns[0];
+  }
+
   const topNMatch = q.match(/\b(?:top|bottom|highest|lowest|maximum|minimum|rank)\s+(\d{1,3})\b/);
   const hintedTopN = topNMatch ? Number(topNMatch[1]) : null;
 
-  const next = { ...intent };
+  const next = normalizeIntent({ ...intent }, metadata);
   if (hintedGroup) {
     next.groupBy = hintedGroup;
     next.xAxis = hintedGroup;
     if (hasTerm("month") || hasTerm("monthly")) {
       next.analysisType = "trend";
       next.chartType = "line";
-    } else if (hintedValue) {
+    } else if (finalValueColumn) {
       next.analysisType = "comparison";
       next.chartType = "bar";
     } else if (next.analysisType === "summary") {
       next.analysisType = "comparison";
     }
   }
-  if (hintedValue) {
-    next.yAxis = hintedValue;
+  if (finalValueColumn) {
+    next.yAxis = finalValueColumn;
   }
   if (hintedTopN) {
     next.topN = hintedTopN;
@@ -81,10 +145,73 @@ function applyQueryHints(intent, query, metadata) {
   if (next.groupBy) targets.add(next.groupBy);
   if (next.yAxis) targets.add(next.yAxis);
   next.targetColumns = Array.from(targets);
+  return normalizeIntent(next, metadata);
+}
+
+function normalizeIntent(intent, metadata) {
+  const columns = metadata.columns || [];
+  const columnTypes = metadata.columnTypes || {};
+  const numericColumns = columns.filter((col) => columnTypes[col] === "numeric");
+  const categoricalColumns = columns.filter((col) => columnTypes[col] === "categorical");
+  const datetimeColumns = columns.filter((col) => columnTypes[col] === "datetime");
+  const validAnalysisTypes = new Set(["summary", "distribution", "comparison", "aggregation", "trend", "correlation", "top_n", "outlier"]);
+  const validChartTypes = new Set(["bar", "line", "scatter", "pie", "histogram", "area", "table"]);
+  const next = { ...intent };
+
+  next.groupBy = resolveColumn(next.groupBy, columns);
+  next.xAxis = resolveColumn(next.xAxis, columns) || next.groupBy || null;
+  next.yAxis = resolveColumn(next.yAxis, columns) || null;
+  next.targetColumns = Array.isArray(next.targetColumns)
+    ? next.targetColumns.map((col) => resolveColumn(col, columns)).filter(Boolean)
+    : [];
+
+  if (!validAnalysisTypes.has(next.analysisType)) {
+    if (next.groupBy && (next.yAxis || numericColumns.length)) next.analysisType = "comparison";
+    else if (datetimeColumns.length && (next.yAxis || numericColumns.length)) next.analysisType = "trend";
+    else if (numericColumns.length >= 2) next.analysisType = "correlation";
+    else if (categoricalColumns.length || numericColumns.length) next.analysisType = "comparison";
+    else next.analysisType = "summary";
+  }
+
+  if (!validChartTypes.has(next.chartType)) {
+    next.chartType = next.analysisType === "trend"
+      ? "line"
+      : next.analysisType === "correlation"
+        ? "scatter"
+        : next.analysisType === "distribution"
+          ? "bar"
+          : "bar";
+  }
+
   return next;
 }
 
-function buildFallbackIntent(query, metadata) {
+function resolveColumn(value, columns) {
+  if (!value) return null;
+  const raw = String(value);
+  const inner = raw.match(/\(([^)]+)\)/)?.[1] || raw;
+  return columns.find((column) => column === inner)
+    || columns.find((column) => column.toLowerCase() === inner.toLowerCase())
+    || columns.find((column) => normalizeColumnName(column) === normalizeColumnName(inner))
+    || null;
+}
+
+function findByPhraseColumn(query, columns) {
+  const match = query.match(/\bby\s+([a-z0-9_ -]+)/i);
+  if (!match) return null;
+  const phrase = match[1].split(/\b(?:for|where|with|and|over|show|top|bottom)\b/i)[0].trim();
+  return resolveColumn(phrase, columns);
+}
+
+function normalizeColumnName(value) {
+  return String(value || "").replace(/^\uFEFF/, "").replace(/[_-]+/g, " ").trim().toLowerCase();
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildFallbackIntent(query, metadata, intelligence = null) {
   const q = String(query || "").toLowerCase();
   const columns = metadata.columns || [];
   const columnTypes = metadata.columnTypes || {};
@@ -95,14 +222,21 @@ function buildFallbackIntent(query, metadata) {
   const findColumn = (patterns, candidates = columns) =>
     candidates.find((col) => patterns.some((pattern) => col.toLowerCase().includes(pattern)));
 
+  // Enhanced: use intelligence schema if available
+  const intelligenceNumeric = intelligence?.schema?.numericalColumns || [];
+  const intelligenceCategorical = intelligence?.schema?.categoricalColumns || [];
+  const intelligenceDatetime = intelligence?.schema?.dateColumns || [];
+
   const periodColumn =
     findColumn(["date", "month", "year", "period"], columns) ||
+    intelligenceDatetime[0] ||
     datetimeColumns[0];
 
   const groupColumn =
     (q.includes("city") && findColumn(["city"], categoricalColumns)) ||
     (q.includes("company") && findColumn(["company"], categoricalColumns)) ||
     periodColumn ||
+    intelligenceCategorical[0] ||
     categoricalColumns[0] ||
     null;
 
@@ -112,6 +246,7 @@ function buildFallbackIntent(query, metadata) {
     ((q.includes("bill") || q.includes("amount") || q.includes("cost") || q.includes("charge")) &&
       findColumn(["bill", "amount", "cost", "charge", "price", "total"], numericColumns)) ||
     findColumn(["bill", "amount", "cost", "charge", "total", "sales", "revenue"], numericColumns) ||
+    intelligenceNumeric[0] ||
     numericColumns.find((col) => col !== groupColumn) ||
     numericColumns[0] ||
     null;

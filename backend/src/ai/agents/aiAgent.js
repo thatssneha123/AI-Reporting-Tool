@@ -11,8 +11,10 @@ const {
 } = require("../utils/aggregation");
 
 // 🔥 MAIN AGENT
-async function runAgent(userInput, rawDataset) {
+async function runAgent(userInput, rawDataset, options = {}) {
   const startTime = Date.now();
+  const datasetIntelligence = options.datasetIntelligence || null;
+  const queryClassification = options.queryClassification || null;
 
   // 1️⃣ Analyze dataset
   const analysis = analyzeDataset(rawDataset);
@@ -20,17 +22,21 @@ async function runAgent(userInput, rawDataset) {
 
   const summary = summarizeAnalysis(analysis);
 
-  // 2️⃣ Understand intent (LLM)
+  // 2️⃣ Understand intent (LLM) - now with intelligence context
   const intent = await parseIntent(userInput, {
     columns: analysis.columns,
     columnTypes: analysis.columnTypes,
     rowCount: analysis.rowCount
+  }, {
+    intelligence: datasetIntelligence,
+    classificationContext: queryClassification,
   });
   
 intent.rawUserInput = userInput;
 
 if (process.env.AI_DEBUG === "true") {
   console.log("RAW INPUT:", intent.rawUserInput);
+  console.log("QUERY CLASSIFICATION:", queryClassification);
 }
 
   // 3️⃣ Compute data (pure JS)
@@ -57,7 +63,9 @@ if (process.env.AI_DEBUG === "true") {
     computedData,
     vizPlan,
     insights,
-    processingTimeMs: Date.now() - startTime
+    processingTimeMs: Date.now() - startTime,
+    datasetIntelligence,
+    queryClassification,
   };
 }
 
@@ -100,7 +108,14 @@ function computeData(intent, analysis) {
   try {
     // SUMMARY
     if (analysisType === "summary") {
-      return analysis.numericStats;
+      return Object.entries(analysis.numericStats).map(([column, stats]) => ({
+        column,
+        count: stats.count,
+        sum: stats.sum,
+        mean: stats.mean,
+        min: stats.min,
+        max: stats.max,
+      }));
     }
 
     // DISTRIBUTION

@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import DatasetPanel from "../components/dashboard/DatasetPanel";
 import QuestionPanel from "../components/dashboard/QuestionPanel";
 import ChartSection from "../components/dashboard/ChartSection";
+import DashboardGrid from "../components/dashboard/DashboardGrid";
 import SummaryCards from "../components/dashboard/SummaryCards";
 import DataTable from "../components/results/DataTable";
 import { datasetService } from "../services/datasetService";
@@ -83,10 +84,8 @@ export default function Dashboard() {
       setError("Please upload or select a dataset first.");
       return;
     }
-    if (!prompt.trim()) {
-      setError("Please enter a question for the chart.");
-      return;
-    }
+    // Allow empty prompt - it will trigger dashboard mode on backend
+    // Only error if they explicitly typed something that's just whitespace and then deleted it
 
     setAnalyzing(true);
     setError("");
@@ -166,134 +165,142 @@ export default function Dashboard() {
             error={error}
           />
 
-          <ChartSection
-            chartType={manualChartType || result?.chartType || "bar"}
-            setChartType={setManualChartType}
-            chartRows={chartRows}
-            result={result}
-            confidence={confidence}
-            locale={numberLocale}
-          />
+          {/* Dashboard Mode: Full Dashboard Grid */}
+          {result && result.dashboardMode ? (
+            <DashboardGrid dashboard={result} locale={numberLocale} />
+          ) : (
+            /* Single Chart Mode: Existing behavior */
+            <>
+              <ChartSection
+                chartType={manualChartType || result?.chartType || "bar"}
+                setChartType={setManualChartType}
+                chartRows={chartRows}
+                result={result}
+                confidence={confidence}
+                locale={numberLocale}
+              />
 
-          {result && (
-  <>
-    <SummaryCards
-      insights={
-        result.insightBullets ||
-        result.insights ||
-        result.datasetSummary
-      }
-    />
+              {result && (
+                <>
+                  <SummaryCards
+                    insights={
+                      result.insightBullets ||
+                      result.insights ||
+                      result.datasetSummary
+                    }
+                  />
 
-    {result.consumptionReport && (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-        <h2 className="mb-4 text-lg font-semibold">
-          Grocery Consumption Report
-        </h2>
+                  {result.consumptionReport && (
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+                      <h2 className="mb-4 text-lg font-semibold">
+                        Grocery Consumption Report
+                      </h2>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <div>
-            <strong>Total Spend:</strong> ₹
-            {result.consumptionReport.totalSpend}
-          </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div>
+                          <strong>Total Spend:</strong> ₹
+                          {result.consumptionReport.totalSpend}
+                        </div>
 
-          <div>
-            <strong>Healthy Spend:</strong> ₹
-            {result.consumptionReport.healthySpend}
-          </div>
+                        <div>
+                          <strong>Healthy Spend:</strong> ₹
+                          {result.consumptionReport.healthySpend}
+                        </div>
 
-          <div>
-            <strong>Unhealthy Spend:</strong> ₹
-            {result.consumptionReport.unhealthySpend}
-          </div>
+                        <div>
+                          <strong>Unhealthy Spend:</strong> ₹
+                          {result.consumptionReport.unhealthySpend}
+                        </div>
 
-          <div>
-            <strong>Health Score:</strong>{" "}
-            {result.consumptionReport.healthScore}
-          </div>
+                        <div>
+                          <strong>Health Score:</strong>{" "}
+                          {result.consumptionReport.healthScore}
+                        </div>
 
-          <div>
-            <strong>Estimated Savings:</strong> ₹
-            {result.consumptionReport.estimatedSavings}
-          </div>
-        </div>
-      </div>
-    )}
+                        <div>
+                          <strong>Estimated Savings:</strong> ₹
+                          {result.consumptionReport.estimatedSavings}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-    {result.recommendationReport && (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-        <h2 className="mb-4 text-lg font-semibold">
-          Recommendation Report
-        </h2>
+                  {result.recommendationReport && (
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+                      <h2 className="mb-4 text-lg font-semibold">
+                        Recommendation Report
+                      </h2>
 
-        <div className="mb-4">
-          <h3 className="font-medium">Recommendations</h3>
+                      <div className="mb-4">
+                        <h3 className="font-medium">Recommendations</h3>
 
-          <ul className="list-disc pl-5">
-            {result.recommendationReport.recommendations?.map(
-              (item, index) => (
-                <li key={index}>{item}</li>
-              )
-            )}
-          </ul>
-        </div>
-        {result.recommendationReport?.unhealthyItems?.length > 0 && (
-  <div className="mt-4">
-    <h3 className="font-medium">Unhealthy Items</h3>
+                        <ul className="list-disc pl-5">
+                          {result.recommendationReport.recommendations?.map(
+                            (item, index) => (
+                              <li key={index}>{item}</li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                      {result.recommendationReport?.unhealthyItems?.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="font-medium">Unhealthy Items</h3>
 
-    <ul className="list-disc pl-5">
-      {result.recommendationReport.unhealthyItems.map(
-        (item, index) => (
-          <li key={index}>
-            {item.item} ({item.category})
-          </li>
-        )
-      )}
-    </ul>
-  </div>
-)}
+                          <ul className="list-disc pl-5">
+                            {result.recommendationReport.unhealthyItems.map(
+                              (item, index) => (
+                                <li key={index}>
+                                  {item.item} ({item.category})
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
 
-{result.recommendationReport?.healthyItems?.length > 0 && (
-  <div className="mt-4">
-    <h3 className="font-medium">Healthy Items</h3>
+                      {result.recommendationReport?.healthyItems?.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="font-medium">Healthy Items</h3>
 
-    <ul className="list-disc pl-5">
-      {result.recommendationReport.healthyItems.map(
-        (item, index) => (
-          <li key={index}>
-            {item.item} ({item.category})
-          </li>
-        )
-      )}
-    </ul>
-  </div>
-)}
+                          <ul className="list-disc pl-5">
+                            {result.recommendationReport.healthyItems.map(
+                              (item, index) => (
+                                <li key={index}>
+                                  {item.item} ({item.category})
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
 
-        <div>
-          <h3 className="font-medium">
-            Swadeshi Alternatives
-          </h3>
+                      <div>
+                        <h3 className="font-medium">
+                          Swadeshi Alternatives
+                        </h3>
 
-          <ul className="list-disc pl-5">
-            {result.recommendationReport.swadeshiAlternatives?.map(
-              (item, index) => (
-                <li key={index}>{item}</li>
-              )
-            )}
-          </ul>
-        </div>
-      </div>
-    )}
+                        <ul className="list-disc pl-5">
+                          {result.recommendationReport.swadeshiAlternatives?.map(
+                            (item, index) => (
+                              <li key={index}>{item}</li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
 
-    {chartRows.length > 0 && (
-      <DataTable
-        data={chartRows}
-        title="Chart Data"
-        locale={numberLocale}
-      />
-    )}
-  </>
-)}
+                  {chartRows.length > 0 && (
+                    <DataTable
+                      data={chartRows}
+                      title="Chart Data"
+                      locale={numberLocale}
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
         </div>
       </main>
     </div>
