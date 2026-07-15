@@ -91,7 +91,7 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
                   {card.label}
                 </div>
                 <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                  {card.metric}
+                  {card.value ?? card.metric}
                 </div>
               </div>
             ))}

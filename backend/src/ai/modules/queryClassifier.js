@@ -150,7 +150,7 @@ function generateDashboardIntents(intelligence, analysis) {
   const intents = [];
 
   // Generate intent for each suggested chart
-  bestCharts.slice(0, 3).forEach((chart) => {
+  bestCharts.slice(0, 6).forEach((chart) => {
     intents.push({
       analysisType: inferAnalysisTypeFromChart(chart.type),
       chartType: chart.type,
@@ -184,7 +184,7 @@ function generateDashboardIntents(intelligence, analysis) {
     }
   }
 
-  return intents.slice(0, 4); // Return max 4 intents for dashboard
+  return intents.slice(0, 8); // Return max 8 intents for dashboard
 }
 
 /**

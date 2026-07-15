@@ -7,6 +7,7 @@
 
 const { generateDashboardIntents, domainToIntentCategories } = require("./queryClassifier");
 const { computeKpiValues, generateSmartKpis } = require("./dashboardKpiCompute");
+const { computeDomainSpecificCharts } = require("./dashboardDataCompute");
 
 /**
  * Generate a complete dashboard from dataset intelligence
@@ -29,8 +30,22 @@ function generateDashboard(intelligence, analysis, rawDataset = []) {
   const quality = intelligence.quality || {};
   const suggestions = intelligence.suggestions || {};
 
-  // 1. Generate suggested chart intents
-  const chartIntents = generateDashboardIntents(intelligence, analysis);
+  // 1. Generate suggested chart intents from intelligence suggestions
+  const genericIntents = generateDashboardIntents(intelligence, analysis);
+
+  // 1b. Generate domain-specific chart intents (Titanic, Netflix, Retail, etc.)
+  const domainCharts = computeDomainSpecificCharts(rawDataset, domain, intelligence);
+
+  // 1c. Merge: domain-specific charts first, then fill with generic, dedup by axis pair
+  const seen = new Set();
+  const chartIntents = [];
+  for (const chart of [...domainCharts, ...genericIntents]) {
+    const key = `${chart.xAxis}__${chart.yAxis}__${chart.chartType}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      chartIntents.push(chart);
+    }
+  }
 
   // 2. Create dataset summary card
   const datasetSummary = {
@@ -338,22 +353,11 @@ function buildNextQuestions(domain, schema) {
  * @returns {boolean} True if dashboard mode should be triggered
  */
 function shouldTriggerDashboard(query) {
-  const q = String(query || "").trim().toLowerCase();
+  const q = String(query || "").trim();
 
-  // Empty or whitespace-only query
-  if (!q) return true;
-
-  // Exact trigger phrases
-  const triggers = [
-    "analyze",
-    "analyze data",
-    "analyze dataset",
-    "show dashboard",
-    "generate dashboard",
-    "dashboard",
-  ];
-
-  return triggers.some(trigger => q === trigger);
+  // Dashboard mode only triggers when query is empty (Dashboard button sends "")
+  // Analyze button always sends non-empty text, so it never triggers dashboard
+  return !q;
 }
 
 module.exports = {

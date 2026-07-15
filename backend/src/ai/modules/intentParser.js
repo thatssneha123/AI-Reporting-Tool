@@ -75,11 +75,30 @@ function applyQueryHints(intent, query, metadata, intelligence = null) {
   const datetimeColumns = columns.filter((col) => columnTypes[col] === "datetime");
   const findColumn = (patterns, candidates = columns) =>
     candidates.find((col) => patterns.some((pattern) => col.toLowerCase().includes(pattern)));
-  const findMentionedColumn = (candidates = columns) =>
-    candidates.find((col) => {
+
+  // Build synonym map for semantic column matching
+  const synonymMap = buildColumnSynonyms(columns);
+
+  // Enhanced findMentionedColumn: checks exact column names AND synonyms
+  const findMentionedColumn = (candidates = columns) => {
+    // 1. Try exact column name match (original behavior)
+    const exactMatch = candidates.find((col) => {
       const normalized = normalizeColumnName(col);
       return normalized && new RegExp(`\\b${escapeRegExp(normalized)}\\b`, "i").test(q);
     });
+    if (exactMatch) return exactMatch;
+
+    // 2. Try synonym-based semantic match
+    for (const col of candidates) {
+      const synonyms = synonymMap[col] || [];
+      for (const syn of synonyms) {
+        if (syn && new RegExp(`\\b${escapeRegExp(syn)}\\b`, "i").test(q)) {
+          return col;
+        }
+      }
+    }
+    return null;
+  };
 
   const hasTerm = (term) => new RegExp(`\\b${term}\\b`, "i").test(q);
   
@@ -111,9 +130,12 @@ function applyQueryHints(intent, query, metadata, intelligence = null) {
     findMentionedColumn(numericColumns) ||
     null;
 
+  // Detect count-based queries: "number of", "how many", "count", "passengers in each"
+  const isCountQuery = /\b(number of|how many|count|total number|passengers in|in each|per each)\b/i.test(q);
+
   // Use intelligence-suggested numeric column as fallback
   let finalValueColumn = hintedValue;
-  if (!finalValueColumn && intelligence?.schema?.numericalColumns?.[0]) {
+  if (!finalValueColumn && !isCountQuery && intelligence?.schema?.numericalColumns?.[0]) {
     finalValueColumn = intelligence.schema.numericalColumns[0];
   }
 
@@ -127,6 +149,11 @@ function applyQueryHints(intent, query, metadata, intelligence = null) {
     if (hasTerm("month") || hasTerm("monthly")) {
       next.analysisType = "trend";
       next.chartType = "line";
+    } else if (isCountQuery) {
+      // Count-based query: use distribution to get value counts
+      next.analysisType = "distribution";
+      next.chartType = "bar";
+      next.aggregation = "count";
     } else if (finalValueColumn) {
       next.analysisType = "comparison";
       next.chartType = "bar";
@@ -186,14 +213,91 @@ function normalizeIntent(intent, metadata) {
   return next;
 }
 
+/**
+ * Build semantic synonyms for each column name
+ * Maps natural language terms to actual dataset column names
+ */
+function buildColumnSynonyms(columns) {
+  // Known synonym patterns: maps column-name fragments to common natural language terms
+  const knownSynonyms = {
+    // Titanic
+    "pclass": ["passenger class", "class", "ticket class", "cabin class"],
+    "sex": ["gender", "male", "female"],
+    "survived": ["survival", "alive", "dead", "death", "living"],
+    "sibsp": ["siblings", "spouse", "sibling spouse"],
+    "parch": ["parents", "children", "parent child"],
+    "fare": ["ticket price", "price", "ticket fare", "cost"],
+    "embarked": ["port", "embarkation", "boarding port", "departure"],
+    "age": ["years old", "passenger age"],
+    // Netflix/Movies
+    "type": ["content type", "show type", "format"],
+    "listed_in": ["genre", "genres", "category", "categories"],
+    "release_year": ["year", "released", "release date"],
+    "rating": ["content rating", "age rating", "maturity"],
+    "director": ["directed by", "filmmaker", "creator"],
+    "duration": ["length", "runtime", "time"],
+    "country": ["nation", "origin", "region"],
+    "date_added": ["added date", "upload date"],
+    // Retail/Sales
+    "category": ["product category", "department", "type"],
+    "sales": ["revenue", "income", "total sales"],
+    "profit": ["margin", "earnings", "net"],
+    "quantity": ["qty", "count", "units", "items"],
+    "region": ["area", "territory", "zone", "location"],
+    "customer": ["client", "buyer", "account"],
+    // General
+    "amount": ["value", "total", "sum"],
+    "date": ["day", "time", "when", "period"],
+    "name": ["title", "label"],
+    "department": ["dept", "team", "group", "division"],
+    "salary": ["pay", "compensation", "wage", "income"],
+  };
+
+  const map = {};
+  for (const col of columns) {
+    const colLower = col.toLowerCase().replace(/[_-]+/g, "");
+    const synonyms = [];
+
+    // Check known synonyms
+    for (const [fragment, syns] of Object.entries(knownSynonyms)) {
+      if (colLower === fragment || colLower.includes(fragment)) {
+        synonyms.push(...syns);
+      }
+    }
+
+    // Also add the column name with underscores/hyphens replaced by spaces
+    const spaced = col.replace(/[_-]+/g, " ").trim().toLowerCase();
+    if (spaced !== col.toLowerCase()) {
+      synonyms.push(spaced);
+    }
+
+    map[col] = synonyms;
+  }
+  return map;
+}
+
 function resolveColumn(value, columns) {
   if (!value) return null;
   const raw = String(value);
   const inner = raw.match(/\(([^)]+)\)/)?.[1] || raw;
-  return columns.find((column) => column === inner)
+
+  // 1. Exact match
+  const exact = columns.find((column) => column === inner)
     || columns.find((column) => column.toLowerCase() === inner.toLowerCase())
-    || columns.find((column) => normalizeColumnName(column) === normalizeColumnName(inner))
-    || null;
+    || columns.find((column) => normalizeColumnName(column) === normalizeColumnName(inner));
+  if (exact) return exact;
+
+  // 2. Synonym-based resolution
+  const synonymMap = buildColumnSynonyms(columns);
+  const innerLower = inner.toLowerCase().replace(/[_-]+/g, " ").trim();
+  for (const col of columns) {
+    const synonyms = synonymMap[col] || [];
+    if (synonyms.some(s => s.toLowerCase() === innerLower)) {
+      return col;
+    }
+  }
+
+  return null;
 }
 
 function findByPhraseColumn(query, columns) {

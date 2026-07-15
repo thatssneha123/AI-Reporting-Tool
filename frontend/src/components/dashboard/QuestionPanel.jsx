@@ -2,6 +2,7 @@ export default function QuestionPanel({
   query,
   setQuery,
   analyze,
+  onDashboard,
   analyzing,
   error,
 }) {
@@ -19,14 +20,25 @@ export default function QuestionPanel({
         />
       </div>
 
-      <button
-        onClick={() => analyze()}
-        disabled={analyzing}
-        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-[15px] font-semibold text-white hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-45"
-      >
-        {analyzing && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-        <span>{analyzing ? "Analyzing..." : "Analyze"}</span>
-      </button>
+      <div className="mt-4 flex gap-3">
+        <button
+          onClick={() => onDashboard()}
+          disabled={analyzing}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-[15px] font-semibold text-white shadow-sm transition-all hover:-translate-y-px hover:shadow-md disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {analyzing && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+          <span>{analyzing ? "Generating..." : "Dashboard"}</span>
+        </button>
+
+        <button
+          onClick={() => analyze()}
+          disabled={analyzing}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] border border-[var(--border-bright)] bg-[var(--bg-elevated)] text-[15px] font-semibold text-[var(--text-primary)] shadow-sm transition-all hover:-translate-y-px hover:shadow-md disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {analyzing && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+          <span>{analyzing ? "Analyzing..." : "Analyze"}</span>
+        </button>
+      </div>
 
       {error && (
         <div className="mt-4 rounded-xl border border-[var(--border)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm font-medium text-[var(--danger)]">

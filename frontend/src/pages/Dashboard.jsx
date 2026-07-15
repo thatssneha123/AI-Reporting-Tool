@@ -79,21 +79,41 @@ export default function Dashboard() {
     }
   };
 
+  // Dashboard mode: generates complete auto-dashboard (no query needed)
+  const generateDashboard = async () => {
+    if (!selectedDatasetId) {
+      setError("Please upload or select a dataset first.");
+      return;
+    }
+    setAnalyzing(true);
+    setError("");
+    try {
+      const response = await queryService.analyze({ datasetId: selectedDatasetId, query: "" });
+      console.log("Dashboard Response:", response);
+      setResult(response);
+      setManualChartType(response.chartType || "bar");
+    } catch (event) {
+      setError(event.message || "Dashboard generation failed. Try again.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  // Analyze mode: answers a specific user question
   const analyze = async (prompt = query) => {
     if (!selectedDatasetId) {
       setError("Please upload or select a dataset first.");
       return;
     }
-    // Allow empty prompt - it will trigger dashboard mode on backend
-    // Only error if they explicitly typed something that's just whitespace and then deleted it
-
+    if (!prompt || !prompt.trim()) {
+      setError("Please enter a question to analyze.");
+      return;
+    }
     setAnalyzing(true);
     setError("");
     try {
       const response = await queryService.analyze({ datasetId: selectedDatasetId, query: prompt });
-
       console.log("API Response:", response);
-
       setQuery(prompt);
       setResult(response);
       setManualChartType(response.chartType || "bar");
@@ -161,12 +181,32 @@ export default function Dashboard() {
             query={query}
             setQuery={setQuery}
             analyze={analyze}
+            onDashboard={generateDashboard}
             analyzing={analyzing}
             error={error}
           />
 
           {/* Dashboard Mode: Full Dashboard Grid */}
-          {result && result.dashboardMode ? (
+          {analyzing ? (
+            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-sm">
+              <div className="relative mb-6 h-12 w-12">
+                <div className="absolute inset-0 animate-ping rounded-full bg-[var(--accent)] opacity-20"></div>
+                <div className="relative h-12 w-12 animate-spin rounded-full border-4 border-[var(--border)] border-t-[var(--accent)]"></div>
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">Analyzing Dataset</h3>
+              <p className="text-sm text-[var(--text-secondary)]">Crunching numbers and generating AI insights...</p>
+            </div>
+          ) : !result ? (
+            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--border-bright)] bg-[var(--bg-card)] p-8 text-center shadow-sm">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-3xl shadow-inner">
+                ✨
+              </div>
+              <h3 className="mb-3 text-xl font-semibold text-[var(--text-primary)]">Ready for Analysis</h3>
+              <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+                Upload a dataset or select an existing one, then click "Dashboard" for a complete overview or type a question and click "Analyze".
+              </p>
+            </div>
+          ) : result && result.dashboardMode ? (
             <DashboardGrid dashboard={result} locale={numberLocale} />
           ) : (
             /* Single Chart Mode: Existing behavior */

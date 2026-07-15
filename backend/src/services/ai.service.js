@@ -60,15 +60,17 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
     console.log(`Computing data for ${dashboard.charts?.length || 0} charts`);
     const chartsWithData = computeAllChartData(dataset, dashboard.charts || [], datasetIntelligence);
     
-    // Always include grocery analysis for any dataset (in case it's applicable)
-    const consumptionReport = analyzeConsumption(dataset);
-    const recommendationReport = generateRecommendations(dataset);
+    // Only include grocery analysis for grocery/expense datasets
+    const domain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
+    const isGroceryDomain = domain === "grocery" || domain === "expense";
+    const consumptionReport = isGroceryDomain ? analyzeConsumption(dataset) : null;
+    const recommendationReport = isGroceryDomain ? generateRecommendations(dataset) : null;
 
     return {
       ...dashboard,
       charts: chartsWithData,
-      consumptionReport,
-      recommendationReport,
+      ...(consumptionReport ? { consumptionReport } : {}),
+      ...(recommendationReport ? { recommendationReport } : {}),
     };
   }
 
@@ -90,14 +92,11 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
 
   const aiResult = normalizeAiResult(result);
 
-  const lowerQuery = normalizedQuery.toLowerCase();
+  // Only attach grocery reports if the dataset is actually a grocery/expense dataset
+  const singleChartDomain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
+  const isSingleChartGrocery = singleChartDomain === "grocery" || singleChartDomain === "expense";
 
-  if (
-    lowerQuery.includes("grocery") ||
-    lowerQuery.includes("bill") ||
-    lowerQuery.includes("consumption") ||
-    lowerQuery.includes("recommendation")
-  ) {
+  if (isSingleChartGrocery) {
     return {
       ...aiResult,
       consumptionReport: analyzeConsumption(dataset),

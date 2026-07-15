@@ -358,7 +358,7 @@ function suggestChartTypes({ numericalColumns, categoricalColumns, dateColumns, 
     charts.push(chart("histogram", "Understand numeric distribution", numericalColumns[0], "count"));
   }
 
-  return dedupeByType(charts).slice(0, 6);
+  return charts.slice(0, 8);
 }
 
 function suggestKpiCards({ domain, numericalColumns, currencyColumns, dateColumns, identifierColumns }) {

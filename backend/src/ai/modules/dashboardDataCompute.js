@@ -26,6 +26,15 @@ function computeChartData(rawData, chartIntent, intelligence) {
   }
 
   try {
+    // Special handling for yAxis === "count" (value counts / frequency)
+    const isCountMode = yAxis === "count";
+
+    if (isCountMode) {
+      // Count-based aggregation: group by xAxis, count occurrences
+      const chartData = computeCountBasedData(rawData, xAxis, chartType, intelligence);
+      return sanitizeChartData(chartData);
+    }
+
     // Transform data: convert dates to years, validate columns exist
     const transformedData = transformDataForChart(
       rawData,
@@ -148,6 +157,57 @@ function sanitizeChartData(chartData) {
   });
 }
 
+/**
+ * Compute count-based chart data (for yAxis === "count")
+ * Groups by xAxis column and counts occurrences
+ */
+function computeCountBasedData(rawData, xAxis, chartType, intelligence) {
+  const { dateColumns = [] } = intelligence.schema || {};
+  const counts = {};
+
+  for (const row of rawData) {
+    let xVal = row[xAxis];
+
+    // Skip missing values
+    if (xVal === null || xVal === undefined || xVal === "") {
+      continue;
+    }
+
+    // Convert date columns to years for grouping
+    if (dateColumns.includes(xAxis)) {
+      const date = new Date(xVal);
+      if (Number.isFinite(date.getTime())) {
+        xVal = date.getFullYear();
+      } else {
+        continue;
+      }
+    }
+
+    const key = String(xVal).trim().substring(0, 30);
+    if (!key) continue;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+
+  let result = Object.entries(counts)
+    .map(([name, value]) => ({ name, value }))
+    .filter(item => item.name && item.name.toLowerCase() !== "undefined" && Number.isFinite(item.value));
+
+  // Sort: line/area by name (chronological), others by value descending
+  if (chartType === "line" || chartType === "area") {
+    result.sort((a, b) => {
+      const aNum = Number(a.name);
+      const bNum = Number(b.name);
+      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+      return String(a.name).localeCompare(String(b.name));
+    });
+  } else {
+    result.sort((a, b) => b.value - a.value);
+  }
+
+  // Limit results for readability
+  return result.slice(0, chartType === "pie" ? 10 : 15);
+}
+
 
 /**
  * Compute data for pie chart (category distribution)
@@ -168,7 +228,7 @@ function computePieData(xValues, yValues) {
   const result = Object.entries(aggregated)
     .map(([name, values]) => ({
       name: String(name).substring(0, 30).trim(),
-      value: Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100,
+      value: Math.round(values.reduce((a, b) => a + b, 0) * 100) / 100,
     }))
     .filter(item => item.name && Number.isFinite(item.value))
     .sort((a, b) => b.value - a.value)
@@ -200,7 +260,7 @@ function computeBarData(xValues, yValues) {
     .map(([name, values]) => ({
       name,
       value: Math.round(
-        (values.reduce((a, b) => a + b, 0) / values.length) * 100
+        values.reduce((a, b) => a + b, 0) * 100
       ) / 100,
     }))
     .filter(item => item.name && Number.isFinite(item.value))
@@ -228,8 +288,8 @@ function computeLineData(xValues, yValues, xAxis) {
     .map(([name, values]) => ({
       name,
       value: Math.round(
-        (values.reduce((a, b) => a + b, 0) / values.length) * 100
-      ) / 100, // Average
+        values.reduce((a, b) => a + b, 0) * 100
+      ) / 100, // Sum (correct for count-based charts)
     }))
     .sort((a, b) => {
       // Try to sort numerically first, then lexicographically
@@ -367,6 +427,63 @@ function computeDomainSpecificCharts(rawData, domain, intelligence) {
         });
       }
       break;
+
+    case "titanic":
+    case "passengers": {
+      const survivedCol = findColumn(["survived", "survival"]);
+      const sexCol = findColumn(["sex", "gender"]);
+      const classCol = findColumn(["class", "pclass"]);
+      const ageCol = findColumn(["age"]);
+      const fareCol = findColumn(["fare", "ticket_price"]);
+      const embarkedCol = findColumn(["embarked", "port"]);
+
+      if (sexCol) {
+        charts.push({ chartType: "bar", xAxis: sexCol, yAxis: "count", reason: "Survival by Sex" });
+      }
+      if (classCol) {
+        charts.push({ chartType: "bar", xAxis: classCol, yAxis: "count", reason: "Survival by Passenger Class" });
+      }
+      if (ageCol) {
+        charts.push({ chartType: "line", xAxis: ageCol, yAxis: "count", reason: "Age Distribution" });
+      }
+      if (fareCol) {
+        charts.push({ chartType: "line", xAxis: fareCol, yAxis: "count", reason: "Fare Distribution" });
+      }
+      if (embarkedCol) {
+        charts.push({ chartType: "pie", xAxis: embarkedCol, yAxis: "count", reason: "Embarked Distribution" });
+      }
+      if (classCol) {
+        charts.push({ chartType: "pie", xAxis: classCol, yAxis: "count", reason: "Passenger Class Distribution" });
+      }
+      break;
+    }
+
+    case "retail":
+    case "ecommerce": {
+      const retailCatCol = findColumn(["category", "department"]);
+      const retailMonthCol = findColumn(["month", "date", "order_date"]);
+      const retailRegionCol = findColumn(["region", "state", "city", "country"]);
+      const retailProfitCol = findColumn(["profit", "margin"]);
+      const retailCustomerCol = findColumn(["customer", "client"]);
+      const retailSalesCol = findColumn(["sales", "revenue", "amount"]);
+
+      if (retailCatCol && retailSalesCol) {
+        charts.push({ chartType: "bar", xAxis: retailCatCol, yAxis: retailSalesCol, reason: "Sales by Category" });
+      }
+      if (retailMonthCol && retailSalesCol) {
+        charts.push({ chartType: "line", xAxis: retailMonthCol, yAxis: retailSalesCol, reason: "Monthly Sales" });
+      }
+      if (retailRegionCol && retailSalesCol) {
+        charts.push({ chartType: "pie", xAxis: retailRegionCol, yAxis: retailSalesCol, reason: "Region Distribution" });
+      }
+      if (retailProfitCol && retailCatCol) {
+        charts.push({ chartType: "bar", xAxis: retailCatCol, yAxis: retailProfitCol, reason: "Profit Distribution" });
+      }
+      if (retailCustomerCol && retailSalesCol) {
+        charts.push({ chartType: "bar", xAxis: retailCustomerCol, yAxis: retailSalesCol, reason: "Customer Distribution" });
+      }
+      break;
+    }
 
     case "movies":
     case "media":
