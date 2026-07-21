@@ -75,6 +75,28 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
         </div>
       )}
 
+      {/* Executive Summary Card (rendered above KPIs) */}
+      {dashboard.executiveSummary && (
+        <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-lg">✨</span>
+            <h2 className="text-base font-semibold text-[var(--text-primary)]">
+              {dashboard.executiveSummary.title || "Executive Summary"}
+            </h2>
+          </div>
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+            {dashboard.executiveSummary.text}
+          </p>
+          {dashboard.executiveSummary.highlights?.length > 0 && (
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-[var(--text-secondary)]">
+              {dashboard.executiveSummary.highlights.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {/* KPI Cards */}
       {kpis && kpis.cards && kpis.cards.length > 0 && (
         <div className="mb-6">

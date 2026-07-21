@@ -12,7 +12,7 @@ class DashboardAgent {
    * @param {Object} params - { datasetProfile, domainIntelligence, insights }
    * @returns {Promise<Object>} Complete structured dashboard JSON object
    */
-  async assemble({ datasetProfile, domainIntelligence, insights }) {
+  async assemble({ datasetProfile, domainIntelligence, insights, executiveSummary }) {
     const dataset = datasetProfile?.dataset || [];
     const intelligence = datasetProfile?.intelligence || {};
     const analysis = datasetProfile?.analysis || {};
@@ -32,8 +32,8 @@ class DashboardAgent {
     // 2. Reuse existing Dashboard Data Compute for calculating actual chart data
     const chartsWithData = computeAllChartData(dataset, dashboard.charts || [], intelligence);
 
-    // 3. Build Executive Summary
-    const executiveSummary = buildExecutiveSummary({
+    // 3. Use Executive Summary from ExecutiveSummaryAgent or fallback
+    const summaryCard = executiveSummary || buildExecutiveSummary({
       domain: datasetProfile?.domain || intelligence.dataset?.domain || "Generic",
       datasetType: datasetProfile?.datasetType || intelligence.dataset?.inferredType || "Dataset",
       profile,
@@ -52,7 +52,7 @@ class DashboardAgent {
     const completeDashboard = {
       ...dashboard,
       charts: chartsWithData,
-      executiveSummary,
+      executiveSummary: summaryCard,
       insights: formattedInsights,
       domainIntelligence: domainIntelligence || null,
       datasetIntelligence: intelligence,

@@ -13,8 +13,8 @@ class PlannerAgent {
     const domain = (datasetProfile?.domain || "Generic").trim();
     const domainLower = domain.toLowerCase();
 
-    // Default base agent
-    const selectedAgents = ["DatasetAgent"];
+    // Default base agents
+    const selectedAgents = ["DatasetAgent", "ExecutiveSummaryAgent"];
 
     // Domain-specific agent selection rules
     if (domainLower === "grocery" || domainLower === "expense") {

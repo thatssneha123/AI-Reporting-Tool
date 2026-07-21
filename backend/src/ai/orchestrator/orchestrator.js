@@ -3,10 +3,11 @@ const dashboardAgent = require("./agents/DashboardAgent");
 const insightAgent = require("./agents/InsightAgent");
 const domainAgent = require("./agents/DomainAgent");
 const plannerAgent = require("./agents/PlannerAgent");
+const executiveSummaryAgent = require("./agents/ExecutiveSummaryAgent");
 
 /**
  * AI Orchestrator
- * Coordinates execution across specialized agents (DatasetAgent, PlannerAgent, DomainAgent, InsightAgent, DashboardAgent)
+ * Coordinates execution across specialized agents (DatasetAgent, PlannerAgent, DomainAgent, InsightAgent, ExecutiveSummaryAgent, DashboardAgent)
  * while reusing existing modules.
  */
 class Orchestrator {
@@ -26,6 +27,7 @@ class Orchestrator {
 
     let domainIntelligence = null;
     let insights = null;
+    let executiveSummary = null;
 
     // 3. Dynamically execute planned agents according to execution plan
     if (executionPlan.plan.includes("DomainAgent")) {
@@ -44,11 +46,20 @@ class Orchestrator {
       });
     }
 
+    if (executionPlan.plan.includes("ExecutiveSummaryAgent")) {
+      executiveSummary = executiveSummaryAgent.generate({
+        datasetProfile,
+        domainIntelligence,
+        insights,
+      });
+    }
+
     // 4. Call DashboardAgent to assemble the complete structured dashboard object
     const dashboard = await dashboardAgent.assemble({
       datasetProfile,
       domainIntelligence,
       insights,
+      executiveSummary,
     });
 
     return {
