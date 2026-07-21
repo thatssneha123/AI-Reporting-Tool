@@ -2,10 +2,11 @@ const datasetAgent = require("./agents/DatasetAgent");
 const dashboardAgent = require("./agents/DashboardAgent");
 const insightAgent = require("./agents/InsightAgent");
 const domainAgent = require("./agents/DomainAgent");
+const plannerAgent = require("./agents/PlannerAgent");
 
 /**
  * AI Orchestrator
- * Coordinates execution across specialized agents (DatasetAgent, DomainAgent, InsightAgent, DashboardAgent)
+ * Coordinates execution across specialized agents (DatasetAgent, PlannerAgent, DomainAgent, InsightAgent, DashboardAgent)
  * while reusing existing modules.
  */
 class Orchestrator {
@@ -20,19 +21,28 @@ class Orchestrator {
     const datasetProfile = await datasetAgent.process(input, options);
     const { dataset, intelligence, analysis } = datasetProfile;
 
-    // 2. Call DomainAgent to route domain intelligence (Grocery, Sales, Finance, HR, etc.)
-    const domainIntelligence = await domainAgent.process({
-      dataset,
-      intelligence,
-      analysis,
-    });
+    // 2. Call PlannerAgent to dynamically decide execution plan
+    const executionPlan = plannerAgent.createPlan(datasetProfile);
 
-    // 3. Call InsightAgent to compile business insights
-    const insights = await insightAgent.generate({
-      dataset,
-      intelligence,
-      analysis,
-    });
+    let domainIntelligence = null;
+    let insights = null;
+
+    // 3. Dynamically execute planned agents according to execution plan
+    if (executionPlan.plan.includes("DomainAgent")) {
+      domainIntelligence = await domainAgent.process({
+        dataset,
+        intelligence,
+        analysis,
+      });
+    }
+
+    if (executionPlan.plan.includes("InsightAgent")) {
+      insights = await insightAgent.generate({
+        dataset,
+        intelligence,
+        analysis,
+      });
+    }
 
     // 4. Call DashboardAgent to assemble the complete structured dashboard object
     const dashboard = await dashboardAgent.assemble({
@@ -41,7 +51,10 @@ class Orchestrator {
       insights,
     });
 
-    return dashboard;
+    return {
+      ...dashboard,
+      executionPlan,
+    };
   }
 }
 
