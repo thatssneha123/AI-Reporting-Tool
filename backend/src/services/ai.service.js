@@ -11,7 +11,7 @@ const { normalizeQuery } = require("../ai/utils/queryNormalizer");
 const { generateRecommendations } = require("../ai/modules/recommendationEngine");
 const { analyzeConsumption } = require("../ai/modules/consumptionAnalyzer");
 const { classifyQuery, generateDashboardIntents } = require("../ai/modules/queryClassifier");
-const { generateDashboard, shouldTriggerDashboard } = require("../ai/modules/dashboardGenerator");
+const { generateDashboard, shouldTriggerDashboard, buildNextQuestions } = require("../ai/modules/dashboardGenerator");
 const { computeAllChartData } = require("../ai/modules/dashboardDataCompute");
 
 const orchestrator = require("../ai/orchestrator/orchestrator");
@@ -25,6 +25,10 @@ const normalizeAiResult = (result) => {
     ? result.insights.bulletPoints
     : [];
 
+  const domain = result.datasetIntelligence?.dataset?.domain || "Generic";
+  const schema = result.datasetIntelligence?.schema || {};
+  const suggestedQuestions = buildNextQuestions(domain, schema);
+
   return {
     intent: result.intent,
     chartType: result.vizPlan?.chartType || result.intent?.chartType || "bar",
@@ -36,6 +40,11 @@ const normalizeAiResult = (result) => {
     computedData: result.computedData,
     processingTimeMs: result.processingTimeMs,
     datasetIntelligence: result.datasetIntelligence || null,
+    questions: {
+      type: "questions",
+      title: "Suggested Next Questions",
+      questions: suggestedQuestions,
+    },
   };
 };
 
@@ -74,7 +83,7 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
     throw new Error(result.error);
   }
 
-  const aiResult = normalizeAiResult(result);
+  const aiResult = normalizeAiResult({ ...result, datasetIntelligence });
 
   // Only attach grocery reports if the dataset is actually a grocery/expense dataset
   const singleChartDomain = (datasetIntelligence.dataset?.domain || "").toLowerCase();

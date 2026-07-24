@@ -5,7 +5,7 @@ import ChartRenderer from "../results/ChartRenderer";
  * Dashboard Grid Component
  * Renders multiple charts and cards in a responsive grid layout
  */
-export default function DashboardGrid({ dashboard, locale = "en-US" }) {
+export default function DashboardGrid({ dashboard, locale = "en-US", onQuestionSelect }) {
   const [expandedChart, setExpandedChart] = useState(null);
 
   if (!dashboard || !dashboard.dashboardMode) {
@@ -252,6 +252,7 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
                 {questions.questions?.slice(0, 5).map((q, idx) => (
                   <li
                     key={idx}
+                    onClick={() => onQuestionSelect && onQuestionSelect(q)}
                     className="cursor-pointer text-xs text-blue-600 hover:underline dark:text-blue-400"
                   >
                     • {q}

@@ -109,12 +109,12 @@ export default function Dashboard() {
       setError("Please enter a question to analyze.");
       return;
     }
+    setQuery(prompt);
     setAnalyzing(true);
     setError("");
     try {
       const response = await queryService.analyze({ datasetId: selectedDatasetId, query: prompt });
       console.log("API Response:", response);
-      setQuery(prompt);
       setResult(response);
       setManualChartType(response.chartType || "bar");
     } catch (event) {
@@ -207,7 +207,7 @@ export default function Dashboard() {
               </p>
             </div>
           ) : result && result.dashboardMode ? (
-            <DashboardGrid dashboard={result} locale={numberLocale} />
+            <DashboardGrid dashboard={result} locale={numberLocale} onQuestionSelect={analyze} />
           ) : (
             /* Single Chart Mode: Existing behavior */
             <>
@@ -327,6 +327,25 @@ export default function Dashboard() {
                           )}
                         </ul>
                       </div>
+                    </div>
+                  )}
+
+                  {result.questions && result.questions.questions?.length > 0 && (
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+                      <h3 className="mb-4 font-semibold text-[var(--text-primary)]">
+                        {result.questions.title || "Suggested Next Questions"}
+                      </h3>
+                      <ul className="space-y-2">
+                        {result.questions.questions.slice(0, 5).map((q, idx) => (
+                          <li
+                            key={idx}
+                            onClick={() => analyze(q)}
+                            className="cursor-pointer text-xs text-blue-600 hover:underline dark:text-blue-400"
+                          >
+                            • {q}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
 
