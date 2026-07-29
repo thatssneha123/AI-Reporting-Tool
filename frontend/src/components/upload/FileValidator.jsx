@@ -15,13 +15,23 @@ export default function FileValidator({ file, onValid, onError }) {
   if (!file) return null;
 
   return (
-    <div className={`rounded-xl border p-4 ${validation.valid ? "border-[rgba(52,211,153,0.2)] bg-[rgba(52,211,153,0.08)] text-[var(--success)]" : "border-[rgba(248,113,113,0.2)] bg-[rgba(248,113,113,0.08)] text-[var(--danger)]"}`}>
+    <div
+      className={`rounded-lg border p-4 ${
+        validation.valid
+          ? "border-[#9fe1cb] bg-[#e1f5ee] text-[#0f6e56]"
+          : "border-[#f0997b] bg-[#faece7] text-[#712b13]"
+      }`}
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{file.name}</p>
-          <p className="mono mt-1 text-xs opacity-75">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+          <p className="truncate text-sm font-medium">{file.name}</p>
+          <p className="mt-1 text-xs opacity-75">
+            {(file.size / 1024 / 1024).toFixed(2)} MB
+          </p>
         </div>
-        <span className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-xs font-semibold">{validation.valid ? "Ready" : "Blocked"}</span>
+        <span className="rounded-full border border-[#e5e1d8] bg-[#fffefb] px-3 py-1 text-xs font-medium">
+          {validation.valid ? "Ready" : "Blocked"}
+        </span>
       </div>
       {!validation.valid && <p className="mt-3 text-sm">{validation.message}</p>}
     </div>

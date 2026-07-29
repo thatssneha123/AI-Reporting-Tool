@@ -20,22 +20,14 @@ import {
 } from "recharts";
 
 const COLORS = [
-  "#7c6fdf",
-  "#e05c97",
-  "#34d399",
-  "#fbbf24",
-  "#60a5fa",
-  "#f87171",
-  "#a78bfa",
-  "#4ade80",
-  "#fb923c",
-  "#38bdf8",
-  "#c084fc",
-  "#86efac",
-  "#fcd34d",
-  "#67e8f9",
-  "#f9a8d4",
-  "#6ee7b7",
+  "#04342c",
+  "#085041",
+  "#0f6e56",
+  "#1d9e75",
+  "#5dcaa5",
+  "#9fe1cb",
+  "#e1f5ee",
+  "#cfcbb8",
 ];
 
 export const demoTrend = [
@@ -88,37 +80,37 @@ export default function ChartRenderer({
 
   if (!chartData.length || !xKey || !yKey) {
     return (
-      <div className="card p-8 text-center">
+      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-8 text-center">
         <div className="mx-auto h-24 w-full max-w-md skeleton" />
-        <h3 className="mt-6 text-lg font-semibold text-[var(--text-primary)]">No chart yet</h3>
+        <h3 className="mt-6 text-lg font-medium text-[#04342c]">No chart yet</h3>
       </div>
     );
   }
 
   return (
-    <section className="card p-5">
+    <section className="w-full min-w-0 overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <p className="badge-success">Result</p>
-          <h3 className="mt-3 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{title}</h3>
-          <p className="mono mt-1 text-xs text-[var(--text-muted)]">{xKey} vs {yKey}</p>
+          <p className="inline-flex rounded-full border border-[#9fe1cb] bg-[#e1f5ee] px-3 py-1 text-xs font-medium uppercase tracking-wide text-[#0f6e56]">RESULT</p>
+          <h3 className="mt-3 text-lg font-medium tracking-tight text-[#04342c]">{title}</h3>
+          <p className="mt-1 text-xs text-[#8b8a80]">{xKey} vs {yKey}</p>
         </div>
-        <div className="flex overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)]">
+        <div className="flex gap-2">
           <button
             onClick={() => downloadChart(chartRef.current, "svg")}
-            className="px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--accent-glow)] hover:text-[var(--text-primary)]"
+            className="rounded-lg border border-[#e5e1d8] bg-[#fffefb] px-3 py-1.5 text-xs font-medium text-[#3a3a35] hover:border-[#cfcbb8]"
           >
             SVG
           </button>
           <button
             onClick={() => downloadChart(chartRef.current, "png")}
-            className="bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
+            className="rounded-lg bg-[#0f6e56] px-3 py-1.5 text-xs font-medium text-[#e1f5ee] hover:bg-[#085041]"
           >
             PNG
           </button>
         </div>
       </div>
-      <div ref={chartRef} className={`chart-container ${compact ? "h-56" : "h-80"}`}>
+      <div ref={chartRef} className={`chart-container min-w-0 ${compact ? "h-56" : "h-80"}`}>
         <ResponsiveContainer width="100%" height="100%">
           {renderChart(chartType, chartData, xKey, yKey, locale)}
         </ResponsiveContainer>
@@ -142,24 +134,18 @@ function renderChart(chartType, data, xKey, yKey, locale) {
   const commonAxis = {
     tickLine: false,
     axisLine: false,
-    tick: { fill: "#8b8b9e", fontSize: 12, fontFamily: "JetBrains Mono" },
+    tick: { fill: "#3a3a35", fontSize: 12, fontFamily: "ui-sans-serif, system-ui", fontWeight: 500 },
   };
 
   if (chartType === "line") {
     return (
       <LineChart data={data}>
-        <defs>
-          <linearGradient id="lineColor" x1="0" x2="1">
-            <stop offset="0%" stopColor="#7c6fdf" />
-            <stop offset="100%" stopColor="#e05c97" />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+        <CartesianGrid strokeDasharray="4 4" stroke="#e5e1d8" />
         <XAxis dataKey={xKey} {...commonAxis} />
         <YAxis {...commonAxis} />
         <Tooltip content={<ChartTooltip xKey={xKey} yKey={yKey} locale={locale} />} />
         <Legend wrapperStyle={legendStyle} />
-        <Line type="monotone" dataKey={yKey} stroke="url(#lineColor)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+        <Line type="monotone" dataKey={yKey} stroke="#0f6e56" strokeWidth={3} dot={{ r: 4, fill: "#9fe1cb", stroke: "#0f6e56", strokeWidth: 1 }} activeDot={{ r: 7, fill: "#e1f5ee", stroke: "#0f6e56", strokeWidth: 2 }} />
       </LineChart>
     );
   }
@@ -179,11 +165,11 @@ function renderChart(chartType, data, xKey, yKey, locale) {
   if (chartType === "scatter") {
     return (
       <ScatterChart>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+        <CartesianGrid strokeDasharray="4 4" stroke="#e5e1d8" />
         <XAxis dataKey={xKey} {...commonAxis} />
         <YAxis dataKey={yKey} {...commonAxis} />
         <Tooltip content={<ChartTooltip xKey={xKey} yKey={yKey} locale={locale} />} />
-        <Scatter data={data} fill="#7c6fdf" />
+        <Scatter data={data} fill="#0f6e56" />
       </ScatterChart>
     );
   }
@@ -191,28 +177,22 @@ function renderChart(chartType, data, xKey, yKey, locale) {
   if (chartType === "area") {
     return (
       <AreaChart data={data}>
-        <defs>
-          <linearGradient id="areaColor" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#7c6fdf" stopOpacity={0.38} />
-            <stop offset="95%" stopColor="#e05c97" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+        <CartesianGrid strokeDasharray="4 4" stroke="#e5e1d8" />
         <XAxis dataKey={xKey} {...commonAxis} />
         <YAxis {...commonAxis} />
         <Tooltip content={<ChartTooltip xKey={xKey} yKey={yKey} locale={locale} />} />
-        <Area type="monotone" dataKey={yKey} stroke="#7c6fdf" fill="url(#areaColor)" strokeWidth={3} />
+        <Area type="monotone" dataKey={yKey} stroke="#0f6e56" fill="#e1f5ee" strokeWidth={3} />
       </AreaChart>
     );
   }
 
   return (
     <BarChart data={data}>
-      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+      <CartesianGrid strokeDasharray="4 4" stroke="#e5e1d8" />
       <XAxis dataKey={xKey} {...commonAxis} />
       <YAxis {...commonAxis} />
       <Tooltip content={<ChartTooltip xKey={xKey} yKey={yKey} locale={locale} />} />
-      <Bar dataKey={yKey} radius={[10, 10, 0, 0]} fill="#7c6fdf" />
+      <Bar dataKey={yKey} radius={[6, 6, 0, 0]} fill="#0f6e56" />
     </BarChart>
   );
 }
@@ -225,8 +205,8 @@ function ChartTooltip({ active, payload, label, xKey, yKey, locale }) {
 
   return (
     <div style={tooltipStyle} className="px-4 py-3 text-sm">
-      <p className="font-semibold text-[var(--text-primary)]">{String(xValue)}</p>
-      <p className="mono mt-1 text-xs font-medium text-[var(--accent)]">
+      <p className="font-medium text-[#04342c]">{String(xValue)}</p>
+      <p className="mt-1 text-xs font-medium text-[#0f6e56]">
         {yKey}: {formatNumber(yValue, locale)}
       </p>
     </div>
@@ -260,7 +240,7 @@ function downloadChart(container, type) {
     canvas.width = svg.clientWidth * 2;
     canvas.height = svg.clientHeight * 2;
     const context = canvas.getContext("2d");
-    context.fillStyle = "#0a0a0f";
+    context.fillStyle = "#faf9f6";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
@@ -311,19 +291,21 @@ function inferYKey(chartType, keys, numericKeys, xKey) {
 }
 
 const tooltipStyle = {
-  background: "var(--bg-elevated)",
-  border: "1px solid var(--border-bright)",
+  background: "#fffefb",
+  border: "1px solid #e5e1d8",
   borderRadius: 10,
-  boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
+  boxShadow: "none",
 };
 
 const legendStyle = {
-  background: "var(--bg-elevated)",
-  border: "1px solid var(--border)",
+  background: "#fffefb",
+  border: "1px solid #e5e1d8",
   borderRadius: 10,
+  boxShadow: "none",
   padding: 8,
-  color: "var(--text-secondary)",
+  color: "#04342c",
   fontSize: 12,
+  fontWeight: 500,
   maxHeight: 80,
   overflowY: "auto",
 };

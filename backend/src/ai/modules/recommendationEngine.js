@@ -17,6 +17,10 @@ function generateRecommendations(dataset) {
       row.product_name ||
       "";
 
+    if (!String(item).trim()) {
+      continue;
+    }
+
     const category = classifyProduct(item);
 
     const score = getHealthScore(category);
@@ -35,6 +39,9 @@ function generateRecommendations(dataset) {
       });
     }
   }
+
+  report.unhealthyItems = dedupeItemsByName(report.unhealthyItems);
+  report.healthyItems = dedupeItemsByName(report.healthyItems);
 
   const uniqueBadItems = [
     ...new Set(
@@ -96,6 +103,21 @@ function generateRecommendations(dataset) {
     report.unhealthyItems.length * 50;
 
   return report;
+}
+
+function dedupeItemsByName(items) {
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const normalizedName = String(item.item || "").trim().toLowerCase();
+
+    if (!normalizedName || seen.has(normalizedName)) {
+      return false;
+    }
+
+    seen.add(normalizedName);
+    return true;
+  });
 }
 
 module.exports = {

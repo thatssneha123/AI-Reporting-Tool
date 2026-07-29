@@ -35,7 +35,7 @@ const DOMAIN_RULES = [
   },
   {
     domain: "Grocery",
-    keywords: ["grocery", "item", "food", "quantity", "amount", "milk", "bread", "rice", "maggi", "vegetable", "fruit"],
+    keywords: ["grocery", "food", "milk", "bread", "rice", "maggi", "vegetable", "fruit", "apple", "banana", "potato", "onion", "dairy", "grain"],
   },
   {
     domain: "Education",
@@ -301,11 +301,23 @@ function detectDomain(columns, dataset, options) {
     };
   }
 
+  if (best.domain === "Grocery" && !hasStrongGrocerySignal(best.matchedKeywords)) {
+    return {
+      domain: "Generic Business",
+      confidence: 0.35,
+      signals: best.matchedKeywords.slice(0, 8),
+    };
+  }
+
   return {
     domain: best.domain,
     confidence: Number(Math.min(0.95, 0.45 + best.score * 0.08).toFixed(2)),
     signals: best.matchedKeywords.slice(0, 8),
   };
+}
+
+function hasStrongGrocerySignal(matchedKeywords) {
+  return matchedKeywords.includes("grocery") || matchedKeywords.length >= 2;
 }
 
 function inferDatasetType(domain, features) {

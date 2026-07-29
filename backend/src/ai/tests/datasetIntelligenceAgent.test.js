@@ -60,6 +60,32 @@ function runTests() {
     assert(result.schema.categoricalColumns.includes("genre"));
   });
 
+  test("does not classify utility appliance usage as grocery", () => {
+    const result = analyzeDatasetIntelligence([
+      { City: "Delhi", Fan: "120", Refrigerator: "240", AirConditioner: "950", Tele: "80" },
+      { City: "Mumbai", Fan: "110", Refrigerator: "220", AirConditioner: "870", Tele: "75" },
+      { City: "Pune", Fan: "90", Refrigerator: "210", AirConditioner: "760", Tele: "68" },
+    ], { filename: "electricity_bill_dataset.csv" });
+
+    assert.notStrictEqual(result.dataset.domain, "Grocery");
+    assert(!result.dataset.domainSignals.includes("item"));
+    assert(!result.dataset.domainSignals.includes("amount"));
+    assert(!result.dataset.domainSignals.includes("quantity"));
+  });
+
+  test("keeps grocery sample behavior with food item signals", () => {
+    const result = analyzeDatasetIntelligence([
+      { date: "2025-01-01", item: "Maggi", quantity: "2", amount: "40" },
+      { date: "2025-01-02", item: "Milk", quantity: "1", amount: "60" },
+      { date: "2025-01-03", item: "Rice", quantity: "10", amount: "700" },
+    ], { filename: "grocery-sample.csv" });
+
+    assert.strictEqual(result.dataset.domain, "Grocery");
+    assert(result.dataset.domainSignals.includes("grocery"));
+    assert(result.dataset.domainSignals.includes("milk"));
+    assert(result.dataset.domainSignals.includes("rice"));
+  });
+
   test("returns a structured error for empty datasets", () => {
     const result = analyzeDatasetIntelligence([]);
     assert.strictEqual(result.error, "Empty dataset");

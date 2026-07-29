@@ -25,23 +25,23 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
   } = dashboard;
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       {/* Header */}
-      <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="mb-6 overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-6">
+        <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+            <h1 className="text-3xl font-medium text-[#04342c]">
               Dashboard
             </h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              {domain} • {datasetType}
+            <p className="mt-2 text-sm text-[#3a3a35]">
+              {domain} / {datasetType}
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm font-semibold text-[var(--text-secondary)]">
+            <div className="text-sm font-medium text-[#3a3a35]">
               Auto-Generated Dashboard
             </div>
-            <div className="mt-1 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            <div className="mt-1 inline-block rounded-full border border-[#9fe1cb] bg-[#e1f5ee] px-3 py-1 text-xs font-medium text-[#0f6e56]">
               AI Powered
             </div>
           </div>
@@ -50,27 +50,27 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
 
       {/* Summary Cards */}
       {summary && (
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2">
           <MetricCard
             label="Total Records"
             value={summary.metrics.totalRecords.toLocaleString()}
-            icon="📊"
+            icon="ti ti-chart-bar"
           />
           <MetricCard
             label="Total Columns"
             value={summary.metrics.totalColumns}
-            icon="📋"
+            icon="ti ti-table"
           />
           <MetricCard
             label="Data Quality"
             value={`${summary.metrics.dataQualityScore}%`}
-            icon="✓"
+            icon="ti ti-check"
             trend={summary.metrics.dataQualityScore >= 75 ? "up" : "down"}
           />
           <MetricCard
             label="Dataset Type"
             value={summary.metrics.domain}
-            icon="🗂️"
+            icon="ti ti-folders"
           />
         </div>
       )}
@@ -78,19 +78,19 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
       {/* KPI Cards */}
       {kpis && kpis.cards && kpis.cards.length > 0 && (
         <div className="mb-6">
-          <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="mb-4 text-lg font-medium text-[#04342c]">
             {kpis.title}
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {kpis.cards.map((card, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3"
+                className="overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-4"
               >
-                <div className="text-xs text-[var(--text-secondary)]">
+                <div className="text-xs text-[#3a3a35]">
                   {card.label}
                 </div>
-                <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                <div className="mt-1 text-sm font-semibold text-[#04342c]">
                   {card.value ?? card.metric}
                 </div>
               </div>
@@ -102,29 +102,25 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
       {/* Charts Grid */}
       {charts && charts.length > 0 && (
         <div className="mb-6">
-          <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="mb-4 text-lg font-medium text-[#04342c]">
             Visualizations
           </h2>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {charts.map((chart, idx) => (
               <div
                 key={idx}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5"
+                className="min-w-0 overflow-hidden rounded-xl"
                 onClick={() => setExpandedChart(idx)}
               >
-                <h3 className="mb-3 font-semibold text-[var(--text-primary)]">
-                  {chart.reason || `Chart ${idx + 1}`}
-                </h3>
-                <div className="h-64 min-h-64 w-full">
-                  <ChartRenderer
-                    chartType={chart.chartType}
-                    data={chart.chartData || []}
-                    title={chart.reason || `Chart ${idx + 1}`}
-                    xAxis={chart.xAxis}
-                    yAxis={chart.yAxis}
-                    compact={true}
-                  />
-                </div>
+                <ChartRenderer
+                  chartType={chart.chartType}
+                  data={chart.chartData || []}
+                  title={chart.reason || `Chart ${idx + 1}`}
+                  xAxis={chart.xAxis}
+                  yAxis={chart.yAxis}
+                  compact={true}
+                  locale={locale}
+                />
               </div>
             ))}
           </div>
@@ -133,24 +129,24 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
 
       {/* Data Quality Section */}
       {quality && (
-        <div className="mb-6 grid gap-6 lg:grid-cols-2">
+        <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Quality Card */}
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-            <h3 className="mb-4 font-semibold text-[var(--text-primary)]">
+          <div className="overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5">
+            <h3 className="mb-4 font-medium text-[#04342c]">
               {quality.title}
             </h3>
             <div className="space-y-3">
               <div>
-                <div className="text-xs text-[var(--text-secondary)]">
+                <div className="text-xs text-[#3a3a35]">
                   Quality Score
                 </div>
                 <div className="mt-1 flex items-center gap-2">
-                  <div className="text-2xl font-bold text-[var(--text-primary)]">
+                  <div className="text-2xl font-semibold text-[#04342c]">
                     {quality.metrics.dataQualityScore}%
                   </div>
-                  <div className="h-2 flex-1 rounded-full bg-[var(--border)]">
+                  <div className="h-3 flex-1 overflow-hidden rounded-full bg-[#f1efe8]">
                     <div
-                      className="h-2 rounded-full bg-gradient-to-r from-green-400 to-green-600"
+                      className="h-full rounded-full bg-[#0f6e56]"
                       style={{
                         width: `${quality.metrics.dataQualityScore}%`,
                       }}
@@ -159,17 +155,17 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
                 </div>
               </div>
 
-              <div className="mt-4 border-t border-[var(--border)] pt-4">
-                <div className="text-xs font-semibold text-[var(--text-secondary)]">
+              <div className="mt-4 border-t border-[#e5e1d8] pt-4">
+                <div className="text-xs font-medium text-[#3a3a35]">
                   Issues
                 </div>
                 {quality.metrics.missingValuesTotal > 0 && (
-                  <div className="mt-2 text-xs text-[var(--text-secondary)]">
+                  <div className="mt-2 text-xs text-[#3a3a35]">
                     Missing values: {quality.metrics.missingValuesTotal}
                   </div>
                 )}
                 {quality.metrics.duplicateRows > 0 && (
-                  <div className="mt-1 text-xs text-[var(--text-secondary)]">
+                  <div className="mt-1 text-xs text-[#3a3a35]">
                     Duplicate rows: {quality.metrics.duplicateRows}
                   </div>
                 )}
@@ -179,17 +175,18 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
 
           {/* Insights Card */}
           {insights && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <h3 className="mb-4 font-semibold text-[var(--text-primary)]">
+            <div className="overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5">
+              <h3 className="mb-4 font-medium text-[#04342c]">
                 {insights.title}
               </h3>
               <ul className="space-y-2">
                 {insights.insights?.slice(0, 4).map((insight, idx) => (
                   <li
                     key={idx}
-                    className="text-xs text-[var(--text-secondary)]"
+                    className="flex gap-2 text-xs text-[#3a3a35]"
                   >
-                    • {insight}
+                    <span className="text-[#0f6e56]">•</span>
+                    <span>{insight}</span>
                   </li>
                 ))}
               </ul>
@@ -200,20 +197,21 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
 
       {/* Recommendations & Next Questions */}
       {(recommendations || questions) && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Recommendations */}
           {recommendations && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <h3 className="mb-4 font-semibold text-[var(--text-primary)]">
+            <div className="overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5">
+              <h3 className="mb-4 font-medium text-[#04342c]">
                 {recommendations.title}
               </h3>
               <ul className="space-y-2">
                 {recommendations.recommendations?.slice(0, 5).map((rec, idx) => (
                   <li
                     key={idx}
-                    className="text-xs text-[var(--text-secondary)]"
+                    className="flex gap-2 text-xs text-[#3a3a35]"
                   >
-                    → {rec}
+                    <span className="text-[#0f6e56]">→</span>
+                    <span>{rec}</span>
                   </li>
                 ))}
               </ul>
@@ -222,17 +220,18 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
 
           {/* Next Questions */}
           {questions && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <h3 className="mb-4 font-semibold text-[var(--text-primary)]">
+            <div className="overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5">
+              <h3 className="mb-4 font-medium text-[#04342c]">
                 {questions.title}
               </h3>
               <ul className="space-y-2">
                 {questions.questions?.slice(0, 5).map((q, idx) => (
                   <li
                     key={idx}
-                    className="cursor-pointer text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    className="flex cursor-pointer gap-2 text-xs text-[#3a3a35] hover:text-[#0f6e56]"
                   >
-                    • {q}
+                    <span className="text-[#0f6e56]">•</span>
+                    <span>{q}</span>
                   </li>
                 ))}
               </ul>
@@ -247,21 +246,23 @@ export default function DashboardGrid({ dashboard, locale = "en-US" }) {
 /**
  * Metric Card Component
  */
-function MetricCard({ label, value, icon = "📊", trend = null }) {
+function MetricCard({ label, value, icon = "ti ti-chart-bar", trend = null }) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs text-[var(--text-secondary)]">{label}</div>
-          <div className="mt-2 text-2xl font-bold text-[var(--text-primary)]">
+    <div className="overflow-hidden rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-xs text-[#3a3a35]">{label}</div>
+          <div className="mt-2 truncate text-2xl font-semibold text-[#04342c]">
             {value}
           </div>
         </div>
-        <div className="text-2xl">{icon}</div>
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#9fe1cb] bg-[#e1f5ee] text-[#0f6e56]">
+          <i className={`${icon} text-xl`} aria-hidden="true" />
+        </div>
       </div>
       {trend && (
-        <div className="mt-3 text-xs font-semibold text-green-600 dark:text-green-400">
-          {trend === "up" ? "↑ Positive" : "↓ Needs attention"}
+        <div className="mt-3 text-xs font-medium text-[#0f6e56]">
+          {trend === "up" ? "Positive" : "Needs attention"}
         </div>
       )}
     </div>

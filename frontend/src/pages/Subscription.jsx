@@ -6,5 +6,5 @@ const PLANS = [
 ];
 export default function Subscription() {
   const handle = (plan) => alert(`Redirecting to payment for ${plan.name}...`);
-  return <div className="max-w-4xl mx-auto p-6"><h2 className="text-2xl font-bold mb-8">Choose a Plan</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{PLANS.map(p => <PlanCard key={p.id} plan={p} onSelect={handle} />)}</div></div>;
+  return <div className="mx-auto max-w-4xl p-6"><p className="ai-chip mb-4">Subscription</p><h2 className="mb-8 text-3xl font-black text-[var(--text-primary)]">Choose a Plan</h2><div className="grid grid-cols-1 gap-6 md:grid-cols-3">{PLANS.map(p => <PlanCard key={p.id} plan={p} onSelect={handle} />)}</div></div>;
 }

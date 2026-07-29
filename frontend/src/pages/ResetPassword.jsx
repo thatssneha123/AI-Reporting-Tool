@@ -49,8 +49,8 @@ export default function ResetPassword() {
       <form className="space-y-5" onSubmit={handleSubmit}>
         <OtpInput value={otp} onChange={setOtp} />
         <Input label="New Password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {success && <p className="text-sm text-green-400">{success}</p>}
+        {error && <p className="text-sm font-bold text-[var(--danger)]">{error}</p>}
+        {success && <p className="text-sm font-bold text-[var(--success)]">{success}</p>}
         <Button className="w-full" loading={loading}>Reset Password</Button>
       </form>
     </AuthLayout>

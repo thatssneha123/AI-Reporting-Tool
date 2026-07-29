@@ -37,6 +37,26 @@ const normalizeAiResult = (result) => {
   };
 };
 
+const hasItemProductColumn = (dataset) => {
+  if (!Array.isArray(dataset) || dataset.length === 0) {
+    return false;
+  }
+
+  const columns = new Set();
+  dataset.forEach((row) => {
+    if (row && typeof row === "object") {
+      Object.keys(row).forEach((column) => columns.add(String(column).toLowerCase().replace(/[\s_-]+/g, "")));
+    }
+  });
+
+  return Array.from(columns).some((column) => (
+    column === "item" ||
+    column === "product" ||
+    column === "productname" ||
+    column === "itemname"
+  ));
+};
+
 const analyzeFileWithAi = async ({ filePath, query }) => {
   console.log("analyzeFileWithAi called");
   const absolutePath = toAbsolutePath(filePath);
@@ -63,8 +83,9 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
     // Only include grocery analysis for grocery/expense datasets
     const domain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
     const isGroceryDomain = domain === "grocery" || domain === "expense";
-    const consumptionReport = isGroceryDomain ? analyzeConsumption(dataset) : null;
-    const recommendationReport = isGroceryDomain ? generateRecommendations(dataset) : null;
+    const shouldAttachGroceryReports = isGroceryDomain && hasItemProductColumn(dataset);
+    const consumptionReport = shouldAttachGroceryReports ? analyzeConsumption(dataset) : null;
+    const recommendationReport = shouldAttachGroceryReports ? generateRecommendations(dataset) : null;
 
     return {
       ...dashboard,
@@ -96,7 +117,7 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
   const singleChartDomain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
   const isSingleChartGrocery = singleChartDomain === "grocery" || singleChartDomain === "expense";
 
-  if (isSingleChartGrocery) {
+  if (isSingleChartGrocery && hasItemProductColumn(dataset)) {
     return {
       ...aiResult,
       consumptionReport: analyzeConsumption(dataset),
@@ -116,20 +137,23 @@ const summarizeFileWithAi = async (filePath) => {
     throw new Error(analysis.error);
   }
 
-  const consumptionReport = analyzeConsumption(dataset);
-const recommendationReport = generateRecommendations(dataset);
+  const shouldAttachGroceryReports = hasItemProductColumn(dataset);
+  const consumptionReport = shouldAttachGroceryReports ? analyzeConsumption(dataset) : null;
+  const recommendationReport = shouldAttachGroceryReports ? generateRecommendations(dataset) : null;
 
-console.log("Consumption:", consumptionReport);
-console.log("Recommendation:", recommendationReport);
+  console.log("Consumption:", consumptionReport);
+  console.log("Recommendation:", recommendationReport);
 
-return {
-  datasetSummary: summarizeAnalysis(analysis),
-  consumptionReport,
-  recommendationReport,
-};
+  return {
+    datasetSummary: summarizeAnalysis(analysis),
+    ...(shouldAttachGroceryReports ? { consumptionReport, recommendationReport } : {}),
+  };
 };
 
 module.exports = {
   analyzeFileWithAi,
   summarizeFileWithAi,
+  _private: {
+    hasItemProductColumn,
+  },
 };

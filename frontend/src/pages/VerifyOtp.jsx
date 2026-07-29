@@ -69,12 +69,12 @@ export default function VerifyOtp() {
     <AuthLayout title="Verify OTP" subtitle={`Enter the 6-digit code sent to ${email || "your email"}.`}>
       <form className="space-y-5" onSubmit={handleVerify}>
         <OtpInput value={otp} onChange={setOtp} />
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {message && <p className="text-sm text-green-400">{message}</p>}
+        {error && <p className="text-sm font-bold text-[var(--danger)]">{error}</p>}
+        {message && <p className="text-sm font-bold text-[var(--success)]">{message}</p>}
         <Button className="w-full" loading={loading}>Verify</Button>
       </form>
       <div className="mt-5 flex items-center justify-between gap-3 text-sm">
-        <Link to="/signup" className="font-semibold text-gray-400">Change email</Link>
+        <Link to="/signup" className="font-bold text-[var(--accent-2)] underline decoration-2 underline-offset-4">Change email</Link>
         <Button type="button" variant="ghost" loading={resending} disabled={seconds > 0} onClick={handleResend}>
           {seconds > 0 ? `Resend in ${seconds}s` : "Resend OTP"}
         </Button>

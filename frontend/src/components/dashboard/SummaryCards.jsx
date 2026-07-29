@@ -2,32 +2,32 @@ const insightTypes = [
   {
     title: "Finding",
     icon: "F",
-    line: "linear-gradient(90deg,#7c6fdf,#a78bfa)",
-    badge: "linear-gradient(135deg,#7c6fdf,#a78bfa)",
+    line: "#3b82f6",
+    badge: "#3b82f6",
   },
   {
     title: "Opportunity",
     icon: "O",
-    line: "linear-gradient(90deg,#059669,#34d399)",
-    badge: "linear-gradient(135deg,#059669,#34d399)",
+    line: "#22c55e",
+    badge: "#22c55e",
   },
   {
     title: "Risk",
     icon: "R",
-    line: "linear-gradient(90deg,#dc2626,#f87171)",
-    badge: "linear-gradient(135deg,#dc2626,#f87171)",
+    line: "#ef4444",
+    badge: "#ef4444",
   },
   {
     title: "Anomaly",
     icon: "A",
-    line: "linear-gradient(90deg,#d97706,#fbbf24)",
-    badge: "linear-gradient(135deg,#d97706,#fbbf24)",
+    line: "#f97316",
+    badge: "#f97316",
   },
   {
     title: "Recommendations",
     icon: "N",
-    line: "linear-gradient(90deg,#7c3aed,#c084fc)",
-    badge: "linear-gradient(135deg,#7c3aed,#c084fc)",
+    line: "#a855f7",
+    badge: "#a855f7",
   },
 ];
 
@@ -45,11 +45,11 @@ export default function SummaryCards({ insights }) {
         {insightTypes.map((type, index) => (
           <article
             key={type.title}
-            className="card relative min-h-[190px] overflow-hidden p-5 hover:-translate-y-0.5 hover:border-[var(--accent)]"
+            className="card relative min-h-[190px] overflow-hidden p-5 hover:border-[var(--accent)]"
           >
-            <div className="absolute left-0 top-0 h-[3px] w-full" style={{ background: type.line }} />
+            <div className="absolute left-0 top-0 h-2 w-full border-b-2 border-[var(--border)]" style={{ background: type.line }} />
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[var(--border)] text-sm font-black text-white shadow-[2px_2px_0_rgba(17,24,39,0.9)]"
               style={{ background: type.badge }}
             >
               {type.icon}
