@@ -49,6 +49,26 @@ const normalizeAiResult = (result) => {
   };
 };
 
+const hasItemProductColumn = (dataset) => {
+  if (!Array.isArray(dataset) || dataset.length === 0) {
+    return false;
+  }
+
+  const columns = new Set();
+  dataset.forEach((row) => {
+    if (row && typeof row === "object") {
+      Object.keys(row).forEach((column) => columns.add(String(column).toLowerCase().replace(/[\s_-]+/g, "")));
+    }
+  });
+
+  return Array.from(columns).some((column) => (
+    column === "item" ||
+    column === "product" ||
+    column === "productname" ||
+    column === "itemname"
+  ));
+};
+
 const analyzeFileWithAi = async ({ filePath, query }) => {
   console.log("analyzeFileWithAi called");
   const absolutePath = toAbsolutePath(filePath);
@@ -97,11 +117,12 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
 
   const aiResult = normalizeAiResult({ ...result, datasetIntelligence });
 
-  // Only attach grocery reports if the dataset is actually a grocery/expense dataset
+  // Only attach grocery reports if the dataset is actually a grocery/expense dataset AND contains product/item columns
   const singleChartDomain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
   const isSingleChartGrocery = singleChartDomain === "grocery" || singleChartDomain === "expense";
+  const shouldAttachGroceryReports = isSingleChartGrocery && hasItemProductColumn(dataset);
 
-  const finalResponse = isSingleChartGrocery
+  const finalResponse = shouldAttachGroceryReports
     ? {
         ...aiResult,
         consumptionReport: analyzeConsumption(dataset),
@@ -131,9 +152,10 @@ const summarizeFileWithAi = async (filePath) => {
 
   const domain = (datasetIntelligence?.dataset?.domain || "").toLowerCase();
   const isGrocery = domain === "grocery" || domain === "expense";
+  const shouldAttachGroceryReports = isGrocery && hasItemProductColumn(dataset);
 
-  const consumptionReport = isGrocery ? analyzeConsumption(dataset) : null;
-  const recommendationReport = isGrocery ? generateRecommendations(dataset) : null;
+  const consumptionReport = shouldAttachGroceryReports ? analyzeConsumption(dataset) : null;
+  const recommendationReport = shouldAttachGroceryReports ? generateRecommendations(dataset) : null;
 
   return {
     datasetSummary: summarizeAnalysis(analysis),
@@ -145,4 +167,7 @@ const summarizeFileWithAi = async (filePath) => {
 module.exports = {
   analyzeFileWithAi,
   summarizeFileWithAi,
+  _private: {
+    hasItemProductColumn,
+  },
 };

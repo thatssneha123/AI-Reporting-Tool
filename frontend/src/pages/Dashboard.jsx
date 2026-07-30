@@ -126,35 +126,45 @@ export default function Dashboard() {
 
   const chartRows = Array.isArray(result?.chartData) ? result.chartData : [];
   const confidence = Math.round((result?.intent?.confidence || 0) * 100);
+  const visibleUnhealthyItems = useMemo(
+    () => filterRecommendationItems(result?.recommendationReport?.unhealthyItems),
+    [result?.recommendationReport?.unhealthyItems]
+  );
+  const visibleHealthyItems = useMemo(
+    () => filterRecommendationItems(result?.recommendationReport?.healthyItems),
+    [result?.recommendationReport?.healthyItems]
+  );
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[var(--border)] bg-[rgba(10,10,15,0.85)] px-6 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#faf9f6] text-[#04342c]">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#e5e1d8] bg-[#fffefb] px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-xs font-bold text-white">AI</span>
-            <h1 className="text-sm font-semibold text-[var(--text-primary)]">AI Reporting Tool</h1>
-            <span className="mono hidden max-w-[260px] truncate rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-xs text-[var(--text-secondary)] sm:inline-block">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#0f6e56] text-[#e1f5ee]">
+              <i className="ti ti-sparkles text-lg" aria-hidden="true" />
+            </span>
+            <h1 className="text-sm font-medium text-[#04342c]">AI Reporting Tool</h1>
+            <span className="hidden max-w-[260px] truncate rounded-full border border-[#e5e1d8] bg-[#f1efe8] px-3 py-1 text-xs font-medium text-[#5f6e69] sm:inline-block">
               {selectedDataset?.originalName || (loadingHistory ? "Loading..." : "No dataset")}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex h-9 items-center gap-2 rounded-[10px] border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5">
-            <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-[10px] font-bold text-white">
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-[#e5e1d8] bg-[#f1efe8] px-2.5">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-[#0f6e56] text-[10px] font-medium text-[#e1f5ee]">
               {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
             </span>
             <span className="hidden min-w-0 sm:block">
-              <span className="block max-w-[110px] truncate text-xs font-semibold text-[var(--text-primary)]">
+              <span className="block max-w-[110px] truncate text-xs font-medium text-[#04342c]">
                 {user?.name || "User"}
               </span>
-              <span className="mono block max-w-[140px] truncate text-[10px] text-[var(--text-muted)]">
+              <span className="block max-w-[140px] truncate text-[10px] text-[#8b8a80]">
                 {user?.email || "Signed in"}
               </span>
             </span>
           </div>
           <button
             onClick={logout}
-            className="h-9 rounded-[10px] border border-[var(--border-bright)] px-4 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+            className="h-9 rounded-lg border border-[#e5e1d8] bg-[#fffefb] px-4 text-xs font-medium text-[#04342c] hover:border-[#cfcbb8] hover:bg-[#f1efe8]"
           >
             Logout
           </button>
@@ -188,21 +198,21 @@ export default function Dashboard() {
 
           {/* Dashboard Mode: Full Dashboard Grid */}
           {analyzing ? (
-            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-sm">
+            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-8">
               <div className="relative mb-6 h-12 w-12">
-                <div className="absolute inset-0 animate-ping rounded-full bg-[var(--accent)] opacity-20"></div>
-                <div className="relative h-12 w-12 animate-spin rounded-full border-4 border-[var(--border)] border-t-[var(--accent)]"></div>
+                <div className="absolute inset-0 animate-ping rounded-full bg-[#e1f5ee]"></div>
+                <div className="relative h-12 w-12 animate-spin rounded-full border-4 border-[#e5e1d8] border-t-[#0f6e56]"></div>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">Analyzing Dataset</h3>
-              <p className="text-sm text-[var(--text-secondary)]">Crunching numbers and generating AI insights...</p>
+              <h3 className="mb-2 text-lg font-medium text-[#04342c]">Analyzing Dataset</h3>
+              <p className="text-sm text-[#3a3a35]">Crunching numbers and generating AI insights...</p>
             </div>
           ) : !result ? (
-            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--border-bright)] bg-[var(--bg-card)] p-8 text-center shadow-sm">
-              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-3xl shadow-inner">
-                ✨
+            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#e5e1d8] bg-[#fffefb] p-8 text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-xl border border-[#9fe1cb] bg-[#e1f5ee] text-[#0f6e56]">
+                <i className="ti ti-sparkles text-3xl" aria-hidden="true" />
               </div>
-              <h3 className="mb-3 text-xl font-semibold text-[var(--text-primary)]">Ready for Analysis</h3>
-              <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+              <h3 className="mb-3 text-xl font-medium text-[#04342c]">Ready for analysis</h3>
+              <p className="max-w-md text-sm leading-relaxed text-[#8b8a80]">
                 Upload a dataset or select an existing one, then click "Dashboard" for a complete overview or type a question and click "Analyze".
               </p>
             </div>
@@ -231,8 +241,8 @@ export default function Dashboard() {
                   />
 
                   {result.consumptionReport && (
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                      <h2 className="mb-4 text-lg font-semibold">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5 text-[#3a3a35]">
+                      <h2 className="mb-4 text-lg font-medium text-[#04342c]">
                         Grocery Consumption Report
                       </h2>
 
@@ -266,8 +276,8 @@ export default function Dashboard() {
                   )}
 
                   {result.recommendationReport && (
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-                      <h2 className="mb-4 text-lg font-semibold">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-[#fffefb] p-5 text-[#3a3a35]">
+                      <h2 className="mb-4 text-lg font-medium text-[#04342c]">
                         Recommendation Report
                       </h2>
 
@@ -282,12 +292,12 @@ export default function Dashboard() {
                           )}
                         </ul>
                       </div>
-                      {result.recommendationReport?.unhealthyItems?.length > 0 && (
+                      {visibleUnhealthyItems.length > 0 && (
                         <div className="mt-4">
                           <h3 className="font-medium">Unhealthy Items</h3>
 
                           <ul className="list-disc pl-5">
-                            {result.recommendationReport.unhealthyItems.map(
+                            {visibleUnhealthyItems.map(
                               (item, index) => (
                                 <li key={index}>
                                   {item.item} ({item.category})
@@ -298,12 +308,12 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {result.recommendationReport?.healthyItems?.length > 0 && (
+                      {visibleHealthyItems.length > 0 && (
                         <div className="mt-4">
                           <h3 className="font-medium">Healthy Items</h3>
 
                           <ul className="list-disc pl-5">
-                            {result.recommendationReport.healthyItems.map(
+                            {visibleHealthyItems.map(
                               (item, index) => (
                                 <li key={index}>
                                   {item.item} ({item.category})
@@ -391,4 +401,21 @@ function parseDatasetPreview(file) {
   }
 
   return Promise.resolve([]);
+}
+
+function filterRecommendationItems(items) {
+  if (!Array.isArray(items)) return [];
+
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const normalizedName = String(item?.item || "").trim().toLowerCase();
+
+    if (!normalizedName || normalizedName === "(unknown)" || seen.has(normalizedName)) {
+      return false;
+    }
+
+    seen.add(normalizedName);
+    return true;
+  });
 }

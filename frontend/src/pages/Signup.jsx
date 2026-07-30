@@ -46,10 +46,10 @@ export default function Signup() {
         <Input label="Full Name" value={form.name} error={errors.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <Input label="Email" type="email" value={form.email} error={errors.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <Input label="Password" type="password" value={form.password} error={errors.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        {serverError && <p className="text-sm text-red-400">{serverError}</p>}
+        {serverError && <p className="text-sm font-bold text-[var(--danger)]">{serverError}</p>}
         <Button className="w-full" loading={loading}>Sign Up</Button>
       </form>
-      <p className="mt-6 text-center text-sm text-gray-400">Already have an account? <Link to="/login" className="font-semibold text-indigo-400">Login</Link></p>
+      <p className="mt-6 text-center text-sm font-semibold text-[var(--text-secondary)]">Already have an account? <Link to="/login" className="font-bold text-[var(--accent-2)] underline decoration-2 underline-offset-4">Login</Link></p>
     </AuthLayout>
   );
 }

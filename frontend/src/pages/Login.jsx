@@ -42,12 +42,12 @@ export default function Login() {
         <Input label="Email" type="email" value={form.email} error={errors.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <Input label="Password" type="password" value={form.password} error={errors.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         <div className="text-right">
-          <Link to="/forgot-password" className="text-sm font-semibold text-indigo-400">Forgot password?</Link>
+          <Link to="/forgot-password" className="text-sm font-bold text-[var(--accent-2)] underline decoration-2 underline-offset-4">Forgot password?</Link>
         </div>
-        {serverError && <p className="text-sm text-red-400">{serverError}</p>}
+        {serverError && <p className="text-sm font-bold text-[var(--danger)]">{serverError}</p>}
         <Button className="w-full" loading={loading}>Login</Button>
       </form>
-      <p className="mt-6 text-center text-sm text-gray-400">New here? <Link to="/signup" className="font-semibold text-indigo-400">Create account</Link></p>
+      <p className="mt-6 text-center text-sm font-semibold text-[var(--text-secondary)]">New here? <Link to="/signup" className="font-bold text-[var(--accent-2)] underline decoration-2 underline-offset-4">Create account</Link></p>
     </AuthLayout>
   );
 }

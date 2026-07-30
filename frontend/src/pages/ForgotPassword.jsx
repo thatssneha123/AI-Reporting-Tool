@@ -35,7 +35,7 @@ export default function ForgotPassword() {
         <Input label="Email" type="email" value={email} error={error} onChange={(e) => setEmail(e.target.value)} />
         <Button className="w-full" loading={loading}>Send OTP</Button>
       </form>
-      <p className="mt-6 text-center text-sm text-gray-400"><Link to="/login" className="font-semibold text-indigo-400">Back to login</Link></p>
+      <p className="mt-6 text-center text-sm font-semibold text-[var(--text-secondary)]"><Link to="/login" className="font-bold text-[var(--accent-2)] underline decoration-2 underline-offset-4">Back to login</Link></p>
     </AuthLayout>
   );
 }

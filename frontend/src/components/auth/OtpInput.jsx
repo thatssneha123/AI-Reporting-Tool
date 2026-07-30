@@ -33,7 +33,7 @@ export default function OtpInput({ value, onChange }) {
           onKeyDown={(event) => {
             if (event.key === "Backspace" && !digits[index].trim() && index > 0) refs.current[index - 1]?.focus();
           }}
-          className="aspect-square rounded-lg border border-[#2a2a4a] bg-[#0f0f1a] text-center text-xl font-bold text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          className="aspect-square rounded-lg border-2 border-[var(--border)] bg-white text-center text-xl font-black text-[var(--text-primary)] shadow-[2px_2px_0_rgba(17,24,39,0.9)] outline-none transition focus:border-[var(--accent)] focus:shadow-[4px_4px_0_rgba(17,24,39,0.9)]"
         />
       ))}
     </div>

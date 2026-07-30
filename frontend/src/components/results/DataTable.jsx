@@ -63,7 +63,7 @@ export default function DataTable({ data = [], title = "Analysis Results Table",
   if (!rows.length) {
     return (
       <div className="card p-10 text-center">
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-sm font-bold text-white">D</div>
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border-2 border-[var(--border)] bg-[var(--accent-2)] text-sm font-black text-white shadow-[2px_2px_0_rgba(17,24,39,0.9)]">D</div>
         <h3 className="mt-5 text-lg font-semibold text-[var(--text-primary)]">No data yet</h3>
       </div>
     );
@@ -82,14 +82,14 @@ export default function DataTable({ data = [], title = "Analysis Results Table",
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="input-dark h-9 pl-9 pr-3 text-sm"
+              className="neo-input h-9 pl-9 pr-3 text-sm"
               placeholder="Search table..."
             />
           </div>
-          <div className="flex overflow-hidden rounded-lg border border-[var(--border)]">
-            <button onClick={exportCsv} className="h-9 bg-[var(--bg-elevated)] px-4 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">CSV</button>
-            <button onClick={exportExcel} className="h-9 border-l border-[var(--border)] bg-[var(--bg-elevated)] px-4 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Excel</button>
-            <button onClick={exportPdf} className="h-9 border-l border-[var(--border)] bg-[var(--text-primary)] px-4 text-xs font-semibold text-[var(--bg-base)] hover:opacity-90">PDF</button>
+          <div className="flex overflow-hidden rounded-lg border-2 border-[var(--border)] shadow-[2px_2px_0_rgba(17,24,39,0.9)]">
+            <button onClick={exportCsv} className="h-9 bg-[#dbeafe] px-4 text-xs font-bold text-[var(--text-primary)] hover:bg-[#bfdbfe]">CSV</button>
+            <button onClick={exportExcel} className="h-9 border-l-2 border-[var(--border)] bg-[#dcfce7] px-4 text-xs font-bold text-[var(--text-primary)] hover:bg-[#bbf7d0]">Excel</button>
+            <button onClick={exportPdf} className="h-9 border-l-2 border-[var(--border)] bg-[var(--accent)] px-4 text-xs font-bold text-white hover:bg-[#fb923c]">PDF</button>
           </div>
         </div>
       </div>
