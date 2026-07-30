@@ -58,12 +58,13 @@ class DashboardAgent {
       datasetIntelligence: intelligence,
     };
 
-    // 6. Include Domain Reports for Grocery / Expense datasets
-    if (domainIntelligence?.consumptionReport) {
-      completeDashboard.consumptionReport = domainIntelligence.consumptionReport;
-    }
-    if (domainIntelligence?.recommendationReport) {
-      completeDashboard.recommendationReport = domainIntelligence.recommendationReport;
+    // 6. Include Domain Reports ONLY for Grocery / Expense datasets
+    if (domainIntelligence?.isGroceryDomain === true) {
+      completeDashboard.consumptionReport = domainIntelligence.consumptionReport || null;
+      completeDashboard.recommendationReport = domainIntelligence.recommendationReport || null;
+    } else {
+      completeDashboard.consumptionReport = null;
+      completeDashboard.recommendationReport = null;
     }
 
     return completeDashboard;

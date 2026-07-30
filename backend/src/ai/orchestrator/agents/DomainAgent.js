@@ -1,98 +1,77 @@
-const { analyzeConsumption } = require("../../modules/consumptionAnalyzer");
-const { generateRecommendations } = require("../../modules/recommendationEngine");
-const { buildRecommendations, buildNextQuestions, buildInsights } = require("../../modules/dashboardGenerator");
+const groceryAgent = require("./GroceryAgent");
+const salesAgent = require("./SalesAgent");
+const hrAgent = require("./HRAgent");
+const financeAgent = require("./FinanceAgent");
+const healthcareAgent = require("./HealthcareAgent");
+const genericAgent = require("./GenericAgent");
 
 /**
  * DomainAgent
- * Domain Intelligence layer that routes execution based on dataset domain (Grocery, Sales, Finance, HR, Healthcare, Education, Movies, Generic).
- * Reuses existing consumptionAnalyzer, recommendationEngine, and dashboardGenerator functions without duplicating logic.
+ * Central Domain Intelligence router featuring a pluggable agent registry.
+ * Registers and delegates execution to specialized domain agents (GroceryAgent, SalesAgent, HRAgent, FinanceAgent, HealthcareAgent, GenericAgent).
  */
 class DomainAgent {
+  constructor() {
+    this.agents = new Map();
+    
+    // Register domain agents
+    this.registerAgent("grocery", groceryAgent);
+    this.registerAgent("expense", groceryAgent);
+    this.registerAgent("sales", salesAgent);
+    this.registerAgent("orders", salesAgent);
+    this.registerAgent("hr", hrAgent);
+    this.registerAgent("workforce", hrAgent);
+    this.registerAgent("finance", financeAgent);
+    this.registerAgent("healthcare", healthcareAgent);
+    this.registerAgent("medical", healthcareAgent);
+    this.registerAgent("generic", genericAgent);
+  }
+
   /**
-   * Process dataset domain intelligence
+   * Register a pluggable domain agent
+   * @param {string} domainName 
+   * @param {Object} agentInstance 
+   */
+  registerAgent(domainName, agentInstance) {
+    if (domainName && agentInstance) {
+      this.agents.set(domainName.trim().toLowerCase(), agentInstance);
+    }
+  }
+
+  /**
+   * Retrieve the matching domain agent for a given domain and dataset
+   * @param {string} domainName 
+   * @param {Array} dataset 
+   * @returns {Object} Matching domain agent instance
+   */
+  getAgent(domainName, dataset) {
+    const key = String(domainName || "generic").trim().toLowerCase();
+
+    // 1. Explicit registered domain lookup (grocery, sales, hr, finance, healthcare, etc.)
+    if (this.agents.has(key)) {
+      return this.agents.get(key);
+    }
+
+    // 2. Fallback heuristic check for grocery data ONLY when domain is generic/unclassified
+    if (groceryAgent.isGroceryData && groceryAgent.isGroceryData(dataset)) {
+      return groceryAgent;
+    }
+
+    // 3. Default fallback
+    return genericAgent;
+  }
+
+  /**
+   * Process dataset domain intelligence via registered pluggable domain agents
    * @param {Object} params - { dataset, intelligence, analysis, dashboard }
    * @returns {Promise<Object>} Structured Domain Intelligence object
    */
-  async process({ dataset, intelligence, analysis, dashboard }) {
-    const domain = (intelligence?.dataset?.domain || "Generic").trim();
-    const domainLower = domain.toLowerCase();
-    const isGroceryDomain = domainLower === "grocery" || domainLower === "expense" || isGroceryData(dataset);
-
-    // 1. Grocery / Expense Domain Routing
-    if (isGroceryDomain && Array.isArray(dataset) && dataset.length > 0) {
-      const consumptionReport = analyzeConsumption(dataset);
-      const recommendationReport = generateRecommendations(dataset);
-
-      const aiSuggestions = recommendationReport.recommendations || [
-        "Track spending by category and identify savings opportunities.",
-        "Monitor purchase frequency and seasonal patterns.",
-      ];
-
-      const suggestedQuestions = [
-        "What's my spending by category?",
-        "Where am I spending the most?",
-        "What are my purchase patterns?",
-      ];
-
-      return {
-        domain: "Grocery",
-        domainType: "Grocery Consumption & Health Intelligence",
-        isGroceryDomain: true,
-        consumptionReport,
-        recommendationReport,
-        metrics: {
-          totalSpend: consumptionReport.totalSpend,
-          healthySpend: consumptionReport.healthySpend,
-          unhealthySpend: consumptionReport.unhealthySpend,
-          healthScore: consumptionReport.healthScore,
-          estimatedSavings: consumptionReport.estimatedSavings,
-        },
-        items: {
-          healthyItems: recommendationReport.healthyItems || [],
-          unhealthyItems: recommendationReport.unhealthyItems || [],
-          swadeshiAlternatives: recommendationReport.swadeshiAlternatives || [],
-        },
-        aiSuggestions,
-        suggestedQuestions,
-      };
-    }
-
-    // 2. Generic / Other Domain Routing (Sales, Finance, HR, Healthcare, Education, Movies, etc.)
-    const schema = intelligence?.schema || {};
-    const quality = intelligence?.quality || {};
-
-    const aiSuggestions = buildRecommendations(domain, schema, quality);
-    const suggestedQuestions = buildNextQuestions(domain, schema);
-    const domainInsights = buildInsights(domain, schema, quality);
-
-    return {
-      domain,
-      domainType: `${domain} Intelligence`,
-      isGroceryDomain: false,
-      consumptionReport: null,
-      recommendationReport: null,
-      aiSuggestions,
-      suggestedQuestions,
-      domainInsights,
-    };
+  async process(params = {}) {
+    const { dataset, intelligence } = params;
+    const domain = (intelligence?.dataset?.domain || params.domain || "Generic").trim();
+    const agent = this.getAgent(domain, dataset);
+    return await agent.process(params);
   }
-}
-
-/**
- * Helper: Check if dataset rows contain grocery/expense product keywords
- */
-function isGroceryData(dataset) {
-  if (!Array.isArray(dataset) || dataset.length === 0) return false;
-  const sample = dataset.slice(0, 15);
-  const keys = Object.keys(sample[0] || {}).map((k) => k.toLowerCase());
-  const hasItemCol = keys.some((k) => ["item", "product", "product_name", "grocery", "bill"].includes(k));
-  if (!hasItemCol) return false;
-
-  const itemsText = sample
-    .map((r) => String(r.item || r.product || r.product_name || "").toLowerCase())
-    .join(" ");
-
-  return /maggi|milk|bread|rice|flour|maida|vegetable|fruit|coke|pepsi|butter|cheese|grocery|biscuit|noodle/i.test(itemsText);
 }
 
 module.exports = new DomainAgent();

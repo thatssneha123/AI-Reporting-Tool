@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ChartRenderer from "../results/ChartRenderer";
+import DomainWidgetRenderer from "./DomainWidgets";
 
 /**
  * Dashboard Grid Component
@@ -23,6 +24,9 @@ export default function DashboardGrid({ dashboard, locale = "en-US", onQuestionS
     recommendations,
     questions,
   } = dashboard;
+
+  const activeDomain = String(domain || dashboard.domainIntelligence?.domain || "generic").toLowerCase().trim();
+  const isGroceryDomain = activeDomain === "grocery" || activeDomain === "expense" || dashboard.domainIntelligence?.isGroceryDomain === true;
 
   return (
     <div className="w-full">
@@ -263,88 +267,12 @@ export default function DashboardGrid({ dashboard, locale = "en-US", onQuestionS
           )}
         </div>
       )}
-
-      {/* Grocery Consumption Report (Automatically rendered below Dashboard for Grocery datasets) */}
-      {dashboard.consumptionReport && (
-        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-          <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">
-            Grocery Consumption Report
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
-              <div className="text-xs text-[var(--text-secondary)]">Total Spend</div>
-              <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">₹{dashboard.consumptionReport.totalSpend}</div>
-            </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
-              <div className="text-xs text-[var(--text-secondary)]">Healthy Spend</div>
-              <div className="mt-1 text-sm font-semibold text-green-500">₹{dashboard.consumptionReport.healthySpend}</div>
-            </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
-              <div className="text-xs text-[var(--text-secondary)]">Unhealthy Spend</div>
-              <div className="mt-1 text-sm font-semibold text-red-500">₹{dashboard.consumptionReport.unhealthySpend}</div>
-            </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
-              <div className="text-xs text-[var(--text-secondary)]">Health Score</div>
-              <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{dashboard.consumptionReport.healthScore}/100</div>
-            </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
-              <div className="text-xs text-[var(--text-secondary)]">Estimated Savings</div>
-              <div className="mt-1 text-sm font-semibold text-emerald-400">₹{dashboard.consumptionReport.estimatedSavings}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recommendation Report (Automatically rendered below Dashboard for Grocery datasets) */}
-      {dashboard.recommendationReport && (
-        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-          <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">
-            Recommendation Report
-          </h2>
-          {dashboard.recommendationReport.recommendations?.length > 0 && (
-            <div className="mb-4">
-              <h3 className="mb-2 text-sm font-semibold text-[var(--text-secondary)]">AI Suggestions</h3>
-              <ul className="list-disc space-y-1 pl-5 text-xs text-[var(--text-secondary)]">
-                {dashboard.recommendationReport.recommendations.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="grid gap-6 md:grid-cols-3">
-            {dashboard.recommendationReport.unhealthyItems?.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-sm font-semibold text-red-400">Unhealthy Items</h3>
-                <ul className="list-disc space-y-1 pl-5 text-xs text-[var(--text-secondary)]">
-                  {dashboard.recommendationReport.unhealthyItems.map((item, idx) => (
-                    <li key={idx}>{item.item} ({item.category})</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {dashboard.recommendationReport.healthyItems?.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-sm font-semibold text-green-400">Healthy Items</h3>
-                <ul className="list-disc space-y-1 pl-5 text-xs text-[var(--text-secondary)]">
-                  {dashboard.recommendationReport.healthyItems.map((item, idx) => (
-                    <li key={idx}>{item.item} ({item.category})</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {dashboard.recommendationReport.swadeshiAlternatives?.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-sm font-semibold text-emerald-400">Swadeshi Alternatives</h3>
-                <ul className="list-disc space-y-1 pl-5 text-xs text-[var(--text-secondary)]">
-                  {dashboard.recommendationReport.swadeshiAlternatives.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Domain-Aware Pluggable Widgets Renderer */}
+      <DomainWidgetRenderer
+        dashboard={dashboard}
+        activeDomain={activeDomain}
+        isGroceryDomain={isGroceryDomain}
+      />
     </div>
   );
 }

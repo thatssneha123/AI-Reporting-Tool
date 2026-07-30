@@ -4,6 +4,7 @@ const insightAgent = require("./agents/InsightAgent");
 const domainAgent = require("./agents/DomainAgent");
 const plannerAgent = require("./agents/PlannerAgent");
 const executiveSummaryAgent = require("./agents/ExecutiveSummaryAgent");
+const memoryAgent = require("./agents/MemoryAgent");
 
 /**
  * AI Orchestrator
@@ -61,6 +62,19 @@ class Orchestrator {
       insights,
       executiveSummary,
     });
+
+    // 5. Record session memory via MemoryAgent
+    if (executionPlan.plan.includes("MemoryAgent")) {
+      const sessionKey = options.sessionId || options.filePath || (typeof input === "string" ? input : datasetProfile?.metadata?.filename) || "default";
+      memoryAgent.saveSession(sessionKey, {
+        datasetType: datasetProfile.datasetType,
+        profile: datasetProfile.profile,
+        domainIntelligence,
+        insights,
+        executiveSummary,
+        dashboard,
+      });
+    }
 
     return {
       ...dashboard,

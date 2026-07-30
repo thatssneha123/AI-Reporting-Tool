@@ -15,6 +15,7 @@ const { generateDashboard, shouldTriggerDashboard, buildNextQuestions } = requir
 const { computeAllChartData } = require("../ai/modules/dashboardDataCompute");
 
 const orchestrator = require("../ai/orchestrator/orchestrator");
+const memoryAgent = require("../ai/orchestrator/agents/MemoryAgent");
 
 const toAbsolutePath = (filePath) => path.isAbsolute(filePath)
   ? filePath
@@ -62,6 +63,17 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
   }
 
   // WORKFLOW 2: Single-Chart Analysis (existing behavior)
+  const sessionKey = absolutePath;
+
+  // Check if query is a follow-up query relying on session memory
+  if (memoryAgent.isFollowUpQuery(query)) {
+    const memoryResponse = memoryAgent.resolveFollowUp(query, sessionKey);
+    if (memoryResponse) {
+      memoryAgent.recordQuestion(sessionKey, query, memoryResponse);
+      return memoryResponse;
+    }
+  }
+
   const dataset = await loadDataset(absolutePath);
   const datasetIntelligence = analyzeDatasetIntelligence(dataset, {
     filename: path.basename(absolutePath),
@@ -89,37 +101,45 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
   const singleChartDomain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
   const isSingleChartGrocery = singleChartDomain === "grocery" || singleChartDomain === "expense";
 
-  if (isSingleChartGrocery) {
-    return {
-      ...aiResult,
-      consumptionReport: analyzeConsumption(dataset),
-      recommendationReport: generateRecommendations(dataset),
-    };
-  }
+  const finalResponse = isSingleChartGrocery
+    ? {
+        ...aiResult,
+        consumptionReport: analyzeConsumption(dataset),
+        recommendationReport: generateRecommendations(dataset),
+      }
+    : aiResult;
 
-  return aiResult;
+  memoryAgent.recordQuestion(sessionKey, query, finalResponse);
+
+  return finalResponse;
 };
 
 const summarizeFileWithAi = async (filePath) => {
   console.log("summarizeFileWithAi called");
-  const dataset = await loadDataset(toAbsolutePath(filePath));
+  const absolutePath = toAbsolutePath(filePath);
+  const dataset = await loadDataset(absolutePath);
   const analysis = analyzeDataset(dataset);
 
   if (analysis.error) {
     throw new Error(analysis.error);
   }
 
-  const consumptionReport = analyzeConsumption(dataset);
-const recommendationReport = generateRecommendations(dataset);
+  const datasetIntelligence = analyzeDatasetIntelligence(dataset, {
+    filename: path.basename(absolutePath),
+    fileType: path.extname(absolutePath).replace(".", ""),
+  });
 
-console.log("Consumption:", consumptionReport);
-console.log("Recommendation:", recommendationReport);
+  const domain = (datasetIntelligence?.dataset?.domain || "").toLowerCase();
+  const isGrocery = domain === "grocery" || domain === "expense";
 
-return {
-  datasetSummary: summarizeAnalysis(analysis),
-  consumptionReport,
-  recommendationReport,
-};
+  const consumptionReport = isGrocery ? analyzeConsumption(dataset) : null;
+  const recommendationReport = isGrocery ? generateRecommendations(dataset) : null;
+
+  return {
+    datasetSummary: summarizeAnalysis(analysis),
+    consumptionReport,
+    recommendationReport,
+  };
 };
 
 module.exports = {

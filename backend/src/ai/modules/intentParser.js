@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { callLLMJson } = require("../services/llmService");
 const { classifyQuery } = require("./queryClassifier");
+const biReasoningEngine = require("./biReasoningEngine");
 
 const combinedPrompt = fs.readFileSync(
   path.join(__dirname, "../prompts/combinedPrompt.txt"),
@@ -49,21 +50,18 @@ Query Category: ${classificationContext.category}
 Query Type: ${classificationContext.mode}`;
   }
 
+  let rawIntent;
   try {
-    const intent = await callLLMJson(promptContext, "");
-    return applyQueryHints(intent, query, metadata, intelligence);
+    rawIntent = await callLLMJson(promptContext, "");
   } catch (error) {
     if (process.env.AI_DEBUG === "true") {
-      console.warn("LLM intent parsing failed, using local fallback:", error.message);
+      console.warn("LLM intent parsing failed, using BI Reasoning Engine:", error.message);
     }
-
-    return applyQueryHints(
-      buildFallbackIntent(query, metadata, intelligence),
-      query,
-      metadata,
-      intelligence
-    );
+    rawIntent = biReasoningEngine.reasonAboutQuery(query, metadata, intelligence);
   }
+
+  const hinted = applyQueryHints(rawIntent, query, metadata, intelligence);
+  return biReasoningEngine.refineIntent(hinted, query, metadata, intelligence);
 }
 
 function applyQueryHints(intent, query, metadata, intelligence = null) {

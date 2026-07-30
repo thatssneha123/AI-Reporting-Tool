@@ -190,8 +190,8 @@ function computeData(intent, analysis) {
       return toChartRows(sortOrder === "asc" ? agg.reverse() : agg, grpCol, valCol);
     }
 
-    // TOP N
-    if (analysisType === "top_n") {
+    // TOP N / RANKING
+    if (analysisType === "top_n" || analysisType === "ranking") {
       const grpCol =
         groupBy ||
         intent.xAxis ||

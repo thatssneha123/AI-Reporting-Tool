@@ -5,6 +5,30 @@
  */
 class PlannerAgent {
   /**
+   * Determine domain agent name from domain classification
+   * @param {string} domainLower 
+   * @returns {string} Domain agent class name
+   */
+  getDomainAgentName(domainLower) {
+    if (domainLower === "grocery" || domainLower === "expense") {
+      return "GroceryAgent";
+    }
+    if (domainLower === "sales" || domainLower === "orders") {
+      return "SalesAgent";
+    }
+    if (domainLower === "hr" || domainLower === "workforce") {
+      return "HRAgent";
+    }
+    if (domainLower === "finance" || domainLower === "financial") {
+      return "FinanceAgent";
+    }
+    if (domainLower === "healthcare" || domainLower === "medical") {
+      return "HealthcareAgent";
+    }
+    return "GenericAgent";
+  }
+
+  /**
    * Create an execution plan based on dataset profile and domain
    * @param {Object} datasetProfile - Output from DatasetAgent
    * @returns {Object} Execution plan containing selected agents and step sequence
@@ -16,17 +40,9 @@ class PlannerAgent {
     // Default base agents
     const selectedAgents = ["DatasetAgent", "ExecutiveSummaryAgent"];
 
-    // Domain-specific agent selection rules
-    if (domainLower === "grocery" || domainLower === "expense") {
-      selectedAgents.push("DomainAgent", "InsightAgent", "DashboardAgent");
-    } else if (domainLower === "movies" || domainLower === "media" || domainLower === "netflix") {
-      selectedAgents.push("DomainAgent", "InsightAgent", "DashboardAgent");
-    } else if (domainLower === "sales" || domainLower === "orders") {
-      selectedAgents.push("DomainAgent", "InsightAgent", "DashboardAgent");
-    } else {
-      // Generic or unknown datasets
-      selectedAgents.push("InsightAgent", "DashboardAgent");
-    }
+    // Automatically choose pluggable domain agent
+    const specificDomainAgent = this.getDomainAgentName(domainLower);
+    selectedAgents.push("DomainAgent", specificDomainAgent, "InsightAgent", "DashboardAgent", "MemoryAgent");
 
     const steps = selectedAgents.map((agentName, index) => ({
       step: index + 1,
@@ -37,6 +53,7 @@ class PlannerAgent {
     return {
       domain,
       datasetType: datasetProfile?.datasetType || "Dataset",
+      selectedDomainAgent: specificDomainAgent,
       plan: selectedAgents,
       steps,
       plannedAt: new Date().toISOString(),

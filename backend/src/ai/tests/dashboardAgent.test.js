@@ -61,7 +61,7 @@ async function testDashboardAgent() {
     assert(salesDashboard.domain === "Sales", `Sales domain: "${salesDashboard.domain}"`);
     assert(salesDashboard.executiveSummary && salesDashboard.executiveSummary.title === "Executive Summary", "Generates Executive Summary for Sales");
     assert(Array.isArray(salesDashboard.charts) && salesDashboard.charts.length > 0, "Generates charts with computed data for Sales");
-    assert(salesDashboard.consumptionReport === undefined, "Non-grocery datasets omit consumptionReport");
+    assert(!salesDashboard.consumptionReport, "Non-grocery datasets omit consumptionReport");
 
   } catch (err) {
     console.error("Test execution failed with error:", err);
