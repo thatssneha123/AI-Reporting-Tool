@@ -73,13 +73,13 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
     // WORKFLOW 1: Automatic Dashboard
     console.log("Generating automatic dashboard");
     const analysis = analyzeDataset(dataset);
-    
+
     const dashboard = generateDashboard(datasetIntelligence, analysis, dataset);
-    
+
     // Compute actual chart data for each dashboard chart
     console.log(`Computing data for ${dashboard.charts?.length || 0} charts`);
     const chartsWithData = computeAllChartData(dataset, dashboard.charts || [], datasetIntelligence);
-    
+
     // Only include grocery analysis for grocery/expense datasets
     const domain = (datasetIntelligence.dataset?.domain || "").toLowerCase();
     const isGroceryDomain = domain === "grocery" || domain === "expense";
@@ -98,9 +98,9 @@ const analyzeFileWithAi = async ({ filePath, query }) => {
   // WORKFLOW 2: Single-Chart Analysis (existing behavior)
   // Classify query to determine mode (dashboard vs specific)
   const queryClassification = classifyQuery(query);
-  
+
   const normalizedQuery = normalizeQuery(query || "Summarize this dataset");
-  
+
   // Pass intelligence and classification context to agent
   const result = await runAgent(normalizedQuery, dataset, {
     datasetIntelligence,
